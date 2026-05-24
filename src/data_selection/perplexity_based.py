@@ -1,9 +1,7 @@
 import math
 
-from data_selection.protocol import SelectionMethod
 
-
-class PerplexityBasedSelection(SelectionMethod):
+class PerplexityBasedSelection:
     """Select samples based on perplexity scores from a fixed language model.
 
     Supports three strategies:

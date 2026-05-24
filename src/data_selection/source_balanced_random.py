@@ -1,10 +1,8 @@
 import random
 from collections import defaultdict
 
-from data_selection.protocol import SelectionMethod
 
-
-class SourceBalancedRandomSelection(SelectionMethod):
+class SourceBalancedRandomSelection:
     """Sample proportionally from each source dataset to avoid domination."""
 
     def __init__(self, source_key: str = "source", seed: int | None = None) -> None:

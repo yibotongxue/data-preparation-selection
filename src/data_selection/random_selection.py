@@ -1,9 +1,7 @@
 import random
 
-from data_selection.protocol import SelectionMethod
 
-
-class RandomSelection(SelectionMethod):
+class RandomSelection:
     """Random baseline: uniformly sample k items from the candidate pool."""
 
     def __init__(self, seed: int | None = None) -> None:

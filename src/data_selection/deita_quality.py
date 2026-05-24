@@ -1,7 +1,4 @@
-from data_selection.protocol import SelectionMethod
-
-
-class DeitaQualitySelection(SelectionMethod):
+class DeitaQualitySelection:
     """Select samples with the highest quality × complexity composite score.
 
     DEITA (Data-Efficient Instruction Tuning for Alignment) combines quality

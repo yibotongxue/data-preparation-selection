@@ -1,9 +1,7 @@
 import math
 
-from data_selection.protocol import SelectionMethod
 
-
-class EmbeddingSimilaritySelection(SelectionMethod):
+class EmbeddingSimilaritySelection:
     """Near algorithm: select samples most similar to a domain proxy embedding.
 
     Computes cosine similarity between each sample's embedding and a domain
