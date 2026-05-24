@@ -1,7 +1,7 @@
 [project]
-name = "python-project-template"
+name = "data-selection"
 version = "0.1.0"
-description = "Python项目模板"
+description = "数据选择框架"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = []
