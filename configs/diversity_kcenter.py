@@ -11,7 +11,6 @@ def selector():
         "selector": CustomOmegaConfig.of(
             DiversityKCenterSelector,
             k=100,
-            embedding_key="embedding",
             seed=42,
         ),
     }

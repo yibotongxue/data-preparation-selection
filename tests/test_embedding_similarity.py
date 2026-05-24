@@ -1,57 +1,45 @@
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
+import numpy as np
+
 from data_selection.selectors.embedding_similarity import (
     EmbeddingSimilaritySelector,
 )
 
 
 class TestEmbeddingSimilaritySelection:
-    def test_select_basic(self):
-        proxy = [1.0, 0.0, 0.0]
-        samples = [
-            {"instruction": "a", "embedding": [1.0, 0.0, 0.0]},
-            {"instruction": "b", "embedding": [0.0, 1.0, 0.0]},
-            {"instruction": "c", "embedding": [0.5, 0.0, 0.0]},
-        ]
-        result = EmbeddingSimilaritySelector(k=2, domain_proxy=proxy).select(samples)
-        assert result[0]["instruction"] == "a"
-        assert result[0]["meta"]["similarity"] == 1.0
+    def test_select_basic(self, monkeypatch):
+        mock_near = MagicMock()
+        monkeypatch.setattr(
+            "data_selection.selectors.embedding_similarity.offline_near_Selector",
+            mock_near,
+        )
+        indices = np.array([[1, 0, 2]])
+        monkeypatch.setattr(
+            "data_selection.selectors.embedding_similarity.np.load",
+            lambda path: indices,
+        )
 
-    def test_select_auto_proxy(self):
         samples = [
-            {"instruction": "a", "embedding": [1.0, 0.0]},
-            {"instruction": "b", "embedding": [0.0, 1.0]},
-            {"instruction": "c", "embedding": [1.0, 0.0]},
+            {"instruction": "a", "output": "x"},
+            {"instruction": "b", "output": "y"},
+            {"instruction": "c", "output": "z"},
         ]
         result = EmbeddingSimilaritySelector(k=2).select(samples)
         assert len(result) == 2
+        assert result[0] == {
+            **samples[1],
+            "meta": {"selector": "EmbeddingSimilaritySelector", "neighbor_rank": 0},
+        }
+        assert result[1] == {
+            **samples[0],
+            "meta": {"selector": "EmbeddingSimilaritySelector", "neighbor_rank": 1},
+        }
 
     def test_select_k_zero(self):
-        samples = [{"instruction": "a", "embedding": [1.0, 0.0]}]
-        result = EmbeddingSimilaritySelector(k=0).select(samples)
-        assert result == []
+        assert EmbeddingSimilaritySelector(k=0).select([{"instruction": "a"}]) == []
 
     def test_select_empty(self):
-        result = EmbeddingSimilaritySelector(k=3).select([])
-        assert result == []
-
-    def test_select_no_embedding(self):
-        result = EmbeddingSimilaritySelector(k=2, domain_proxy=[1.0, 0.0]).select(
-            [{"instruction": "a"}, {"instruction": "b"}]
-        )
-        assert result == []
-
-    def test_cosine_similarity_perfect(self):
-        proxy = [2.0, 0.0]
-        samples = [
-            {"instruction": "a", "embedding": [2.0, 0.0]},
-            {"instruction": "b", "embedding": [0.0, 2.0]},
-        ]
-        result = EmbeddingSimilaritySelector(k=1, domain_proxy=proxy).select(samples)
-        assert result[0]["instruction"] == "a"
-
-    def test_cosine_zero_vector(self):
-        proxy = [0.0, 0.0]
-        samples = [{"instruction": "a", "embedding": [1.0, 0.0]}]
-        result = EmbeddingSimilaritySelector(k=1, domain_proxy=proxy).select(samples)
-        assert len(result) == 1
+        assert EmbeddingSimilaritySelector(k=3).select([]) == []

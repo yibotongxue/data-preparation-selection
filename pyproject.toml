@@ -5,10 +5,12 @@ description = "数据选择框架"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "dataflow>=0.11.2",
+    "dataflex",
+    "faiss-cpu>=1.14.2",
     "numpy>=2.4.6",
     "omegaconf>=2.3.0",
     "open-dataflow>=1.0.5",
+    "scikit-learn>=1.8.0",
 ]
 
 [tool.black]
@@ -30,6 +32,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "codespell>=2.4.2",
     "pre-commit>=4.2.0",
     "pyright>=1.1.408",
     "pytest>=8.4.1",
@@ -37,3 +40,7 @@ dev = [
 
 [tool.uv]
 index-url = "https://mirrors.aliyun.com/pypi/simple"
+environments = ["sys_platform == 'linux'"]
+
+[tool.uv.sources]
+dataflex = { path = "../../../../tmp/dataflex" }

@@ -1,68 +1,93 @@
 from __future__ import annotations
 
+import json
+import os
+import tempfile
 from collections.abc import Mapping, Sequence
 from typing import Any
 
 import numpy as np
+from dataflex.offline_selector.offline_near_selector import offline_near_Selector
 
 
 class EmbeddingSimilaritySelector:
-    """Near algorithm (OpenDCAI/DataFlex): select samples most similar to
-    a domain proxy embedding via cosine similarity.
+    """Near algorithm (DataFlex): select samples most similar to domain proxy.
 
-    If domain_proxy is None, it is computed as the mean embedding
-    of all candidates at select time.
+    Uses DataFlex's offline_near_Selector with FAISS IVFFlat index.
+    Computes sentence embeddings from instruction/output/conversations.
     """
 
     def __init__(
         self,
         k: int = 100,
-        embedding_key: str = "embedding",
-        domain_proxy: list[float] | None = None,
+        domain_proxy_text: str | None = None,
+        embed_model: str = "Qwen/Qwen3-Embedding-0.6B",
+        embed_method: str = "auto",
+        batch_size: int = 32,
     ) -> None:
         self.k = k
-        self.embedding_key = embedding_key
-        self.domain_proxy = domain_proxy
+        self.domain_proxy_text = domain_proxy_text
+        self.embed_model = embed_model
+        self.embed_method = embed_method
+        self.batch_size = batch_size
 
     def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 
-        proxy = self.domain_proxy
-        valid: list[tuple[int, Mapping[str, Any]]] = [
-            (i, s) for i, s in enumerate(samples) if self.embedding_key in s
-        ]
-        if not valid:
-            return []
+        with tempfile.TemporaryDirectory() as tmpdir:
+            candidate_path = os.path.join(tmpdir, "candidates.json")
+            indices_path = os.path.join(tmpdir, "top_indices.npy")
 
-        valid_indices, valid_samples = zip(*valid)
-        if proxy is None:
-            emb_matrix = np.array([s[self.embedding_key] for s in valid_samples])
-            proxy = emb_matrix.mean(axis=0).tolist()
+            _write_alpaca_json(samples, candidate_path)
 
-        proxy_arr = np.array(proxy, dtype=np.float64)
-        scored: list[tuple[float, int, Mapping[str, Any]]] = []
-        for orig_i, s in zip(valid_indices, valid_samples):
-            emb = np.array(s[self.embedding_key], dtype=np.float64)
-            sim = _cosine_similarity(emb, proxy_arr)
-            scored.append((sim, orig_i, s))
+            if self.domain_proxy_text:
+                query_path = os.path.join(tmpdir, "query.json")
+                _write_alpaca_json(
+                    [{"instruction": self.domain_proxy_text, "output": ""}], query_path
+                )
+            else:
+                query_path = candidate_path
 
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return [
+            near = offline_near_Selector(
+                candidate_path=candidate_path,
+                query_path=query_path,
+                embed_model=self.embed_model,
+                embed_method=self.embed_method,
+                batch_size=self.batch_size,
+                save_indices_path=indices_path,
+                max_K=max(self.k, 64),
+            )
+            near.selector()
+
+            top_indices: np.ndarray = np.load(indices_path)
+            selected_indices = top_indices[0][: min(self.k, top_indices.shape[1])]
+
+        result: list[dict[str, Any]] = []
+        for i in selected_indices:
+            idx = int(i)
+            result.append(
+                {
+                    **samples[idx],
+                    "meta": {
+                        "selector": "EmbeddingSimilaritySelector",
+                        "neighbor_rank": int(list(selected_indices).index(i)),
+                    },
+                }
+            )
+        return result
+
+
+def _write_alpaca_json(samples: Sequence[Mapping[str, Any]], path: str) -> None:
+    items: list[dict[str, str]] = []
+    for s in samples:
+        str(s.get("instruction", s.get("conversations", "")))
+        items.append(
             {
-                **s,
-                "meta": {
-                    "selector": "EmbeddingSimilaritySelector",
-                    "similarity": round(sim, 6),
-                },
+                "instruction": str(s.get("instruction", "")),
+                "input": "",
+                "output": str(s.get("output", "")),
             }
-            for sim, _, s in scored[: min(self.k, len(scored))]
-        ]
-
-
-def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-    norm_a = np.linalg.norm(a)
-    norm_b = np.linalg.norm(b)
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-    return float(np.dot(a, b) / (norm_a * norm_b))
+        )
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=False)

@@ -1,57 +1,90 @@
 from __future__ import annotations
 
-import random
+import json
+import os
+import tempfile
 from collections.abc import Mapping, Sequence
 from typing import Any
 
 import numpy as np
+from dataflex.offline_selector.offline_tsds_selector import offline_tsds_Selector
 
 
 class DiversityKCenterSelector:
-    """TSDS algorithm (OpenDCAI/DataFlex): greedy k-center in embedding
-    space for maximum diversity coverage.
+    """TSDS algorithm (DataFlex): greedy k-center for maximum diversity.
+
+    Uses DataFlex's offline_tsds_Selector with KDE density and FAISS.
+    Computes sentence embeddings from instruction/output/conversations.
     """
 
     def __init__(
         self,
         k: int = 100,
-        embedding_key: str = "embedding",
         seed: int | None = None,
+        embed_model: str = "Qwen/Qwen3-Embedding-0.6B",
+        embed_method: str = "auto",
+        batch_size: int = 32,
+        sigma: float = 0.75,
+        alpha: float = 0.6,
     ) -> None:
         self.k = k
-        self.embedding_key = embedding_key
         self.seed = seed
+        self.embed_model = embed_model
+        self.embed_method = embed_method
+        self.batch_size = batch_size
+        self.sigma = sigma
+        self.alpha = alpha
 
     def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 
-        valid = [s for s in samples if self.embedding_key in s]
-        if not valid:
-            return []
+        with tempfile.TemporaryDirectory() as tmpdir:
+            candidate_path = os.path.join(tmpdir, "candidates.json")
+            probs_path = os.path.join(tmpdir, "tsds_probs.npy")
 
-        embeddings = np.array([s[self.embedding_key] for s in valid], dtype=np.float64)
-        k = min(self.k, len(valid))
+            _write_alpaca_json(samples, candidate_path)
 
-        rng = random.Random(self.seed)
-        selected: list[int] = [rng.randrange(len(valid))]
-        min_dists: np.ndarray = np.full(len(valid), np.inf)
+            tsds = offline_tsds_Selector(
+                candidate_path=candidate_path,
+                query_path=candidate_path,
+                embed_model=self.embed_model,
+                embed_method=self.embed_method,
+                batch_size=self.batch_size,
+                save_probs_path=probs_path,
+                max_K=min(5000, max(len(samples), self.k * 2)),
+                kde_K=min(1000, len(samples)),
+                sigma=self.sigma,
+                alpha=self.alpha,
+            )
+            probs: np.ndarray = tsds.selector()
 
-        for _ in range(1, k):
-            last_emb = embeddings[selected[-1]]
-            dists = np.linalg.norm(embeddings - last_emb, axis=1)
-            min_dists = np.minimum(min_dists, dists)
-            min_dists[selected] = -1.0
-            best = int(np.argmax(min_dists))
-            selected.append(best)
+        top_indices = np.argsort(-probs)[: min(self.k, len(probs))]
 
-        return [
+        result: list[dict[str, Any]] = []
+        for i in top_indices:
+            idx = int(i)
+            result.append(
+                {
+                    **samples[idx],
+                    "meta": {
+                        "selector": "DiversityKCenterSelector",
+                        "tsds_probability": round(float(probs[idx]), 6),
+                    },
+                }
+            )
+        return result
+
+
+def _write_alpaca_json(samples: Sequence[Mapping[str, Any]], path: str) -> None:
+    items: list[dict[str, str]] = []
+    for s in samples:
+        items.append(
             {
-                **valid[i],
-                "meta": {
-                    "selector": "DiversityKCenterSelector",
-                    "min_distance": round(float(min_dists[i]), 6),
-                },
+                "instruction": str(s.get("instruction", "")),
+                "input": "",
+                "output": str(s.get("output", "")),
             }
-            for i in selected
-        ]
+        )
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(items, f, ensure_ascii=False)
