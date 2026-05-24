@@ -4,7 +4,7 @@ from dataflow.operators.eval import FineWebEduScorer, PairQualScorer
 from data_selection.utils import extract_text
 
 
-class QualityScorerSelection:
+class QualityScorerSelector:
     """Select samples by educational/quality score using DataFlow scorers.
 
     Supports three scoring strategies:
@@ -75,7 +75,7 @@ class QualityScorerSelection:
             {
                 **s,
                 "meta": {
-                    "selector": "QualityScorerSelection",
+                    "selector": "QualityScorerSelector",
                     "strategy": self.strategy,
                     "fineweb_edu_score": round(e, 6) if e is not None else None,
                     "pairqual_score": round(p, 6) if p is not None else None,

@@ -1,5 +1,5 @@
 from data_selection.selectors.embedding_similarity import (
-    EmbeddingSimilaritySelection,
+    EmbeddingSimilaritySelector,
 )
 
 
@@ -11,7 +11,7 @@ class TestEmbeddingSimilaritySelection:
             {"instruction": "b", "embedding": [0.0, 1.0, 0.0]},
             {"instruction": "c", "embedding": [0.5, 0.0, 0.0]},
         ]
-        result = EmbeddingSimilaritySelection(domain_proxy=proxy).select(samples, k=2)
+        result = EmbeddingSimilaritySelector(domain_proxy=proxy).select(samples, k=2)
         assert len(result) == 2
         assert result[0]["instruction"] == "a"
         assert result[0]["meta"]["similarity"] == 1.0
@@ -22,23 +22,23 @@ class TestEmbeddingSimilaritySelection:
             {"instruction": "b", "embedding": [0.0, 1.0]},
             {"instruction": "c", "embedding": [1.0, 0.0]},
         ]
-        result = EmbeddingSimilaritySelection().select(samples, k=2)
+        result = EmbeddingSimilaritySelector().select(samples, k=2)
         assert len(result) == 2
         for r in result:
             assert "meta" in r
 
     def test_select_k_zero(self):
         samples = [{"instruction": "a", "embedding": [1.0, 0.0]}]
-        result = EmbeddingSimilaritySelection().select(samples, k=0)
+        result = EmbeddingSimilaritySelector().select(samples, k=0)
         assert result == []
 
     def test_select_empty(self):
-        result = EmbeddingSimilaritySelection().select([], k=3)
+        result = EmbeddingSimilaritySelector().select([], k=3)
         assert result == []
 
     def test_select_no_embedding(self):
         samples = [{"instruction": "a"}, {"instruction": "b"}]
-        result = EmbeddingSimilaritySelection(domain_proxy=[1.0, 0.0]).select(
+        result = EmbeddingSimilaritySelector(domain_proxy=[1.0, 0.0]).select(
             samples, k=2
         )
         assert result == []
@@ -49,11 +49,11 @@ class TestEmbeddingSimilaritySelection:
             {"instruction": "a", "embedding": [2.0, 0.0]},
             {"instruction": "b", "embedding": [0.0, 2.0]},
         ]
-        result = EmbeddingSimilaritySelection(domain_proxy=proxy).select(samples, k=1)
+        result = EmbeddingSimilaritySelector(domain_proxy=proxy).select(samples, k=1)
         assert result[0]["instruction"] == "a"
 
     def test_cosine_zero_vector(self):
         proxy = [0.0, 0.0]
         samples = [{"instruction": "a", "embedding": [1.0, 0.0]}]
-        result = EmbeddingSimilaritySelection(domain_proxy=proxy).select(samples, k=1)
+        result = EmbeddingSimilaritySelector(domain_proxy=proxy).select(samples, k=1)
         assert len(result) == 1

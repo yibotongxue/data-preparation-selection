@@ -6,7 +6,7 @@ from dataflow.operators.eval import PerplexityScorer
 from data_selection.utils import extract_text
 
 
-class PerplexityBasedSelection:
+class PerplexityBasedSelector:
     """Select samples by perplexity using DataFlow's Kenlm-based scorer.
 
     Supports three strategies:
@@ -56,7 +56,7 @@ class PerplexityBasedSelection:
             {
                 **samples[idx],
                 "meta": {
-                    "selector": "PerplexityBasedSelection",
+                    "selector": "PerplexityBasedSelector",
                     "ppl": ppl,
                     "strategy": self.strategy,
                 },

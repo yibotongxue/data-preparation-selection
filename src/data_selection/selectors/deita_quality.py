@@ -5,7 +5,7 @@ from dataflow.operators.eval import (
 )
 
 
-class DeitaQualitySelection:
+class DeitaQualitySelector:
     """Select samples by Deita quality x complexity composite score.
 
     Uses DataFlow's DeitaQualityScorer and DeitaComplexityScorer
@@ -60,7 +60,7 @@ class DeitaQualitySelection:
             {
                 **s,
                 "meta": {
-                    "selector": "DeitaQualitySelection",
+                    "selector": "DeitaQualitySelector",
                     "quality_score": round(q, 4),
                     "complexity_score": round(c, 4),
                     "composite_score": round(composite, 4),

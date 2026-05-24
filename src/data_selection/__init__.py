@@ -1,25 +1,29 @@
-from data_selection.protocol import SelectionMethod
+from data_selection.composite import CompositeSelector
+from data_selection.config import CustomOmegaConfig
+from data_selection.protocol import Selector
 from data_selection.selectors import (
-    DeitaQualitySelection,
-    DiversityKCenterSelection,
-    EmbeddingSimilaritySelection,
-    LengthBasedSelection,
+    DeitaQualitySelector,
+    DiversityKCenterSelector,
+    EmbeddingSimilaritySelector,
+    LengthBasedSelector,
     LLMAsSelector,
-    PerplexityBasedSelection,
-    QualityScorerSelection,
-    RandomSelection,
-    SourceBalancedRandomSelection,
+    PerplexityBasedSelector,
+    QualityScorerSelector,
+    RandomSelector,
+    SourceBalancedRandomSelector,
 )
 
 __all__ = [
-    "SelectionMethod",
-    "RandomSelection",
-    "SourceBalancedRandomSelection",
-    "LengthBasedSelection",
-    "PerplexityBasedSelection",
-    "EmbeddingSimilaritySelection",
-    "DeitaQualitySelection",
-    "QualityScorerSelection",
-    "DiversityKCenterSelection",
+    "Selector",
+    "CustomOmegaConfig",
+    "CompositeSelector",
+    "RandomSelector",
+    "SourceBalancedRandomSelector",
+    "LengthBasedSelector",
+    "PerplexityBasedSelector",
+    "EmbeddingSimilaritySelector",
+    "DeitaQualitySelector",
+    "QualityScorerSelector",
+    "DiversityKCenterSelector",
     "LLMAsSelector",
 ]

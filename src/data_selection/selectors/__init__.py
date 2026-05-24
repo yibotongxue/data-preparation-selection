@@ -1,25 +1,27 @@
-from data_selection.selectors.deita_quality import DeitaQualitySelection
-from data_selection.selectors.diversity_kcenter import DiversityKCenterSelection
+from data_selection.composite import CompositeSelector
+from data_selection.selectors.deita_quality import DeitaQualitySelector
+from data_selection.selectors.diversity_kcenter import DiversityKCenterSelector
 from data_selection.selectors.embedding_similarity import (
-    EmbeddingSimilaritySelection,
+    EmbeddingSimilaritySelector,
 )
-from data_selection.selectors.length_based import LengthBasedSelection
+from data_selection.selectors.length_based import LengthBasedSelector
 from data_selection.selectors.llm_selector import LLMAsSelector
-from data_selection.selectors.perplexity_based import PerplexityBasedSelection
-from data_selection.selectors.quality_scorer import QualityScorerSelection
-from data_selection.selectors.random_selection import RandomSelection
+from data_selection.selectors.perplexity_based import PerplexityBasedSelector
+from data_selection.selectors.quality_scorer import QualityScorerSelector
+from data_selection.selectors.random_selection import RandomSelector
 from data_selection.selectors.source_balanced_random import (
-    SourceBalancedRandomSelection,
+    SourceBalancedRandomSelector,
 )
 
 __all__ = [
-    "RandomSelection",
-    "SourceBalancedRandomSelection",
-    "LengthBasedSelection",
-    "PerplexityBasedSelection",
-    "EmbeddingSimilaritySelection",
-    "DeitaQualitySelection",
-    "QualityScorerSelection",
-    "DiversityKCenterSelection",
+    "RandomSelector",
+    "SourceBalancedRandomSelector",
+    "LengthBasedSelector",
+    "PerplexityBasedSelector",
+    "EmbeddingSimilaritySelector",
+    "DeitaQualitySelector",
+    "QualityScorerSelector",
+    "DiversityKCenterSelector",
     "LLMAsSelector",
+    "CompositeSelector",
 ]

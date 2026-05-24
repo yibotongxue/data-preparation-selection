@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from data_selection.selectors.perplexity_based import PerplexityBasedSelection
+from data_selection.selectors.perplexity_based import PerplexityBasedSelector
 
 
 class TestPerplexityBasedSelection:
@@ -15,7 +15,7 @@ class TestPerplexityBasedSelection:
         mock = MagicMock()
         mock.eval.return_value = [10.0, 5.0, 20.0]
 
-        result = PerplexityBasedSelection(strategy="low", scorer=mock).select(
+        result = PerplexityBasedSelector(strategy="low", scorer=mock).select(
             samples, k=2
         )
         assert len(result) == 2
@@ -27,7 +27,7 @@ class TestPerplexityBasedSelection:
         mock = MagicMock()
         mock.eval.return_value = [10.0, 5.0, 20.0]
 
-        result = PerplexityBasedSelection(strategy="high", scorer=mock).select(
+        result = PerplexityBasedSelector(strategy="high", scorer=mock).select(
             samples, k=2
         )
         assert result[0]["meta"]["ppl"] == 20.0
@@ -38,7 +38,7 @@ class TestPerplexityBasedSelection:
         mock = MagicMock()
         mock.eval.return_value = [10.0, 50.0, 20.0]
 
-        result = PerplexityBasedSelection(strategy="mid", scorer=mock).select(
+        result = PerplexityBasedSelector(strategy="mid", scorer=mock).select(
             samples, k=2
         )
         assert len(result) == 2
@@ -46,14 +46,14 @@ class TestPerplexityBasedSelection:
 
     def test_select_k_zero(self):
         mock = MagicMock()
-        result = PerplexityBasedSelection(scorer=mock).select([{"text": "a"}], k=0)
+        result = PerplexityBasedSelector(scorer=mock).select([{"text": "a"}], k=0)
         assert result == []
 
     def test_select_empty(self):
         mock = MagicMock()
-        result = PerplexityBasedSelection(scorer=mock).select([], k=3)
+        result = PerplexityBasedSelector(scorer=mock).select([], k=3)
         assert result == []
 
     def test_invalid_strategy(self):
         with pytest.raises(ValueError):
-            PerplexityBasedSelection(strategy="invalid")
+            PerplexityBasedSelector(strategy="invalid")

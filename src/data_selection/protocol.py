@@ -1,7 +1,7 @@
 from typing import Protocol
 
 
-class SelectionMethod(Protocol):
+class Selector(Protocol):
     """Protocol for data selection methods.
 
     Each concrete implementation selects a subset of k samples from a

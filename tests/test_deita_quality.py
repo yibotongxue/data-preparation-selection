@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from data_selection.selectors.deita_quality import DeitaQualitySelection
+from data_selection.selectors.deita_quality import DeitaQualitySelector
 
 
 class TestDeitaQualitySelection:
@@ -15,9 +15,7 @@ class TestDeitaQualitySelection:
         mock_c = MagicMock()
         mock_c.eval.return_value = [3.0, 1.0, 5.0]
 
-        selector = DeitaQualitySelection(
-            quality_scorer=mock_q, complexity_scorer=mock_c
-        )
+        selector = DeitaQualitySelector(quality_scorer=mock_q, complexity_scorer=mock_c)
         result = selector.select(samples, k=2)
         assert len(result) == 2
         assert result[0]["instruction"] == "c"
@@ -27,13 +25,13 @@ class TestDeitaQualitySelection:
 
     def test_select_k_zero(self):
         samples = [{"instruction": "a"}]
-        result = DeitaQualitySelection(
+        result = DeitaQualitySelector(
             quality_scorer=MagicMock(), complexity_scorer=MagicMock()
         ).select(samples, k=0)
         assert result == []
 
     def test_select_empty(self):
-        result = DeitaQualitySelection(
+        result = DeitaQualitySelector(
             quality_scorer=MagicMock(), complexity_scorer=MagicMock()
         ).select([], k=3)
         assert result == []

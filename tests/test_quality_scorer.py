@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-from data_selection.selectors.quality_scorer import QualityScorerSelection
+from data_selection.selectors.quality_scorer import QualityScorerSelector
 
 
 class TestQualityScorerSelection:
@@ -15,7 +15,7 @@ class TestQualityScorerSelection:
         mock_edu = MagicMock()
         mock_edu.eval.return_value = np.array([0.8, 0.3, 0.9])
 
-        selector = QualityScorerSelection(strategy="fineweb_edu", edu_scorer=mock_edu)
+        selector = QualityScorerSelector(strategy="fineweb_edu", edu_scorer=mock_edu)
         result = selector.select(samples, k=2)
         assert len(result) == 2
         assert result[0]["meta"]["fineweb_edu_score"] == 0.9
@@ -25,7 +25,7 @@ class TestQualityScorerSelection:
         mock_pq = MagicMock()
         mock_pq.eval.return_value = np.array([0.2, 0.9, 0.5])
 
-        selector = QualityScorerSelection(strategy="pairqual", pq_scorer=mock_pq)
+        selector = QualityScorerSelector(strategy="pairqual", pq_scorer=mock_pq)
         result = selector.select(samples, k=2)
         assert result[0]["meta"]["pairqual_score"] == 0.9
 
@@ -36,7 +36,7 @@ class TestQualityScorerSelection:
         mock_pq = MagicMock()
         mock_pq.eval.return_value = np.array([0.2, 0.9, 0.5])
 
-        selector = QualityScorerSelection(
+        selector = QualityScorerSelector(
             strategy="composite", edu_scorer=mock_edu, pq_scorer=mock_pq
         )
         result = selector.select(samples, k=2)
@@ -44,13 +44,13 @@ class TestQualityScorerSelection:
         assert result[0]["meta"]["strategy"] == "composite"
 
     def test_select_k_zero(self):
-        result = QualityScorerSelection(
+        result = QualityScorerSelector(
             edu_scorer=MagicMock(), pq_scorer=MagicMock()
         ).select([{"text": "hi"}], k=0)
         assert result == []
 
     def test_select_empty(self):
-        result = QualityScorerSelection(
+        result = QualityScorerSelector(
             edu_scorer=MagicMock(), pq_scorer=MagicMock()
         ).select([], k=3)
         assert result == []
@@ -59,4 +59,4 @@ class TestQualityScorerSelection:
         import pytest
 
         with pytest.raises(ValueError):
-            QualityScorerSelection(strategy="invalid")
+            QualityScorerSelector(strategy="invalid")

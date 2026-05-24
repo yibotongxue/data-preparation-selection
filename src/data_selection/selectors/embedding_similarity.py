@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class EmbeddingSimilaritySelection:
+class EmbeddingSimilaritySelector:
     """Near algorithm (OpenDCAI/DataFlex): select samples most similar to
     a domain proxy embedding via cosine similarity.
 
@@ -45,7 +45,7 @@ class EmbeddingSimilaritySelection:
             {
                 **s,
                 "meta": {
-                    "selector": "EmbeddingSimilaritySelection",
+                    "selector": "EmbeddingSimilaritySelector",
                     "similarity": round(sim, 6),
                 },
             }

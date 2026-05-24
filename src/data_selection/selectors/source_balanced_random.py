@@ -2,7 +2,7 @@ import random
 from collections import defaultdict
 
 
-class SourceBalancedRandomSelection:
+class SourceBalancedRandomSelector:
     """Sample proportionally from each source dataset to avoid domination."""
 
     def __init__(self, source_key: str = "source", seed: int | None = None) -> None:
@@ -34,7 +34,7 @@ class SourceBalancedRandomSelection:
                         {
                             **s,
                             "meta": {
-                                "selector": "SourceBalancedRandomSelection",
+                                "selector": "SourceBalancedRandomSelector",
                                 "source": src,
                             },
                         }

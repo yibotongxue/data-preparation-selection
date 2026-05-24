@@ -1,30 +1,33 @@
 import argparse
+import importlib
 import inspect
+import json
 import sys
 from typing import Any, get_args, get_origin
 
+from data_selection.config import CustomOmegaConfig
 from data_selection.selectors import (
-    DeitaQualitySelection,
-    DiversityKCenterSelection,
-    EmbeddingSimilaritySelection,
-    LengthBasedSelection,
+    DeitaQualitySelector,
+    DiversityKCenterSelector,
+    EmbeddingSimilaritySelector,
+    LengthBasedSelector,
     LLMAsSelector,
-    PerplexityBasedSelection,
-    QualityScorerSelection,
-    RandomSelection,
-    SourceBalancedRandomSelection,
+    PerplexityBasedSelector,
+    QualityScorerSelector,
+    RandomSelector,
+    SourceBalancedRandomSelector,
 )
 from data_selection.utils import read_jsonl, write_jsonl
 
 SELECTOR_MAP: dict[str, type] = {
-    "random": RandomSelection,
-    "source_balanced_random": SourceBalancedRandomSelection,
-    "length_based": LengthBasedSelection,
-    "perplexity_based": PerplexityBasedSelection,
-    "embedding_similarity": EmbeddingSimilaritySelection,
-    "deita_quality": DeitaQualitySelection,
-    "quality_scorer": QualityScorerSelection,
-    "diversity_kcenter": DiversityKCenterSelection,
+    "random": RandomSelector,
+    "source_balanced_random": SourceBalancedRandomSelector,
+    "length_based": LengthBasedSelector,
+    "perplexity_based": PerplexityBasedSelector,
+    "embedding_similarity": EmbeddingSimilaritySelector,
+    "deita_quality": DeitaQualitySelector,
+    "quality_scorer": QualityScorerSelector,
+    "diversity_kcenter": DiversityKCenterSelector,
     "llm_selector": LLMAsSelector,
 }
 
@@ -88,26 +91,28 @@ def main() -> None:
         description="Run data selection on a JSONL file.",
     )
     parser.add_argument(
+        "--config",
+        default=None,
+        help="Python module path with a selector() function (e.g. my_project.my_config).",
+    )
+    parser.add_argument(
         "--method",
-        required=True,
+        default=None,
         choices=list(SELECTOR_MAP),
-        help="Selection method name.",
+        help="Quick selection method name (alternative to --config).",
     )
-    parser.add_argument(
-        "--input",
-        required=True,
-        help="Input JSONL file path.",
-    )
-    parser.add_argument(
-        "--output",
-        required=True,
-        help="Output JSONL file path.",
-    )
+    parser.add_argument("--input", required=True, help="Input JSONL file path.")
+    parser.add_argument("--output", required=True, help="Output JSONL file path.")
     parser.add_argument(
         "--k",
         type=int,
         default=100,
         help="Number of samples to select (default: 100).",
+    )
+    parser.add_argument(
+        "--overrides",
+        default=None,
+        help="JSON string of param overrides for --config mode (e.g. '{\"seed\": 42}').",
     )
 
     if cls is not None:
@@ -121,16 +126,27 @@ def main() -> None:
             )
 
     args = parser.parse_args()
-    cls = SELECTOR_MAP[args.method]
-
-    init_kwargs = {}
-    for name, info in _cli_params(cls).items():
-        val = getattr(args, name)
-        if val != info["default"]:
-            init_kwargs[name] = val
 
     samples = read_jsonl(args.input)
-    selector = cls(**init_kwargs)
+
+    if args.config:
+        module = importlib.import_module(args.config)
+        config: CustomOmegaConfig = module.selector()
+        if args.overrides:
+            overrides = json.loads(args.overrides)
+            config = config.merge(**overrides)
+        selector = config.create()
+    elif args.method:
+        cls = SELECTOR_MAP[args.method]
+        init_kwargs = {}
+        for name, info in _cli_params(cls).items():
+            val = getattr(args, name)
+            if val != info["default"]:
+                init_kwargs[name] = val
+        selector = cls(**init_kwargs)
+    else:
+        parser.error("Either --config or --method is required.")
+
     selected = selector.select(samples, k=args.k)
     write_jsonl(selected, args.output)
     print(f"Selected {len(selected)} samples -> {args.output}")

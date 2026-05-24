@@ -3,7 +3,7 @@ import random
 import numpy as np
 
 
-class DiversityKCenterSelection:
+class DiversityKCenterSelector:
     """TSDS algorithm (OpenDCAI/DataFlex): greedy k-center in embedding
     space for maximum diversity coverage.
 
@@ -45,7 +45,7 @@ class DiversityKCenterSelection:
             {
                 **valid[i],
                 "meta": {
-                    "selector": "DiversityKCenterSelection",
+                    "selector": "DiversityKCenterSelector",
                     "min_distance": round(float(min_dists[i]), 6),
                 },
             }
