@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 
-def read_jsonl(path: str | Path) -> list[dict]:
+def read_jsonl(path: str | Path) -> list[dict[str, Any]]:
     """Read samples from a JSONL file."""
     samples = []
     with open(path, encoding="utf-8") as f:
@@ -15,14 +17,14 @@ def read_jsonl(path: str | Path) -> list[dict]:
     return samples
 
 
-def write_jsonl(samples: list[dict], path: str | Path) -> None:
+def write_jsonl(samples: Sequence[Mapping[str, Any]], path: str | Path) -> None:
     """Write samples to a JSONL file."""
     with open(path, "w", encoding="utf-8") as f:
         for s in samples:
             f.write(json.dumps(s, ensure_ascii=False) + "\n")
 
 
-def extract_text(sample: dict) -> str:
+def extract_text(sample: Mapping[str, Any]) -> str:
     """Extract text content from a sample in unified format.
 
     Supports two formats:

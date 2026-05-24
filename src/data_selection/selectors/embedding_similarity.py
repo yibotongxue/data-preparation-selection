@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 import numpy as np
 
 
@@ -21,12 +24,12 @@ class EmbeddingSimilaritySelector:
         self.embedding_key = embedding_key
         self.domain_proxy = domain_proxy
 
-    def select(self, samples: list[dict]) -> list[dict]:
+    def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 
         proxy = self.domain_proxy
-        valid: list[tuple[int, dict]] = [
+        valid: list[tuple[int, Mapping[str, Any]]] = [
             (i, s) for i, s in enumerate(samples) if self.embedding_key in s
         ]
         if not valid:
@@ -38,7 +41,7 @@ class EmbeddingSimilaritySelector:
             proxy = emb_matrix.mean(axis=0).tolist()
 
         proxy_arr = np.array(proxy, dtype=np.float64)
-        scored: list[tuple[float, int, dict]] = []
+        scored: list[tuple[float, int, Mapping[str, Any]]] = []
         for orig_i, s in zip(valid_indices, valid_samples):
             emb = np.array(s[self.embedding_key], dtype=np.float64)
             sim = _cosine_similarity(emb, proxy_arr)

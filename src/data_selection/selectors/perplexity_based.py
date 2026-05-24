@@ -1,23 +1,18 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import pandas as pd
 from dataflow.operators.eval import PerplexityScorer
 
+from data_selection.config import MaybeConfig, maybe_create
 from data_selection.utils import extract_text
 
 
 class PerplexityBasedSelector:
-    """Select samples by perplexity using DataFlow's Kenlm-based scorer.
-
-    Supports three strategies:
-      - "low": lowest PPL (most fluent)
-      - "high": highest PPL (most difficult)
-      - "mid": PPL closest to mean (sweet spot)
-
-    Requires Kenlm model files downloaded from HuggingFace.
-    """
+    """Select samples by perplexity using DataFlow's Kenlm-based scorer."""
 
     def __init__(
         self,
@@ -26,16 +21,18 @@ class PerplexityBasedSelector:
         text_key: str = "text",
         lang: str = "en",
         model_name: str = "dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia",
-        scorer: PerplexityScorer | None = None,
+        scorer: MaybeConfig[PerplexityScorer] = None,
     ) -> None:
         if strategy not in ("low", "high", "mid"):
             raise ValueError(f"Unknown strategy: {strategy}")
         self.k = k
         self.strategy = strategy
         self.text_key = text_key
-        self.scorer = scorer or PerplexityScorer(lang=lang, model_name=model_name)
+        self.scorer = maybe_create(scorer) or PerplexityScorer(
+            lang=lang, model_name=model_name
+        )
 
-    def select(self, samples: list[dict]) -> list[dict]:
+    def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 

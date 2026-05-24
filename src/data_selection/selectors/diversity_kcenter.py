@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import random
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -20,11 +22,11 @@ class DiversityKCenterSelector:
         self.embedding_key = embedding_key
         self.seed = seed
 
-    def select(self, samples: list[dict]) -> list[dict]:
+    def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 
-        valid: list[dict] = [s for s in samples if self.embedding_key in s]
+        valid = [s for s in samples if self.embedding_key in s]
         if not valid:
             return []
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import random
 from collections import defaultdict
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 
 class SourceBalancedRandomSelector:
@@ -14,7 +16,7 @@ class SourceBalancedRandomSelector:
         self.source_key = source_key
         self.seed = seed
 
-    def select(self, samples: list[dict]) -> list[dict]:
+    def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
         rng = random.Random(self.seed)
@@ -26,7 +28,7 @@ class SourceBalancedRandomSelector:
         per_source = self.k // n_sources
         remainder = self.k % n_sources
 
-        selected: list[dict] = []
+        selected: list[dict[str, Any]] = []
         sources = list(by_source.keys())
         rng.shuffle(sources)
         for i, src in enumerate(sources):

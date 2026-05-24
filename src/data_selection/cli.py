@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import importlib
 
-from data_selection._resolve import resolve_target
+from data_selection.config import CustomOmegaConfig
 from data_selection.utils import read_jsonl, write_jsonl
 
 
@@ -20,16 +20,21 @@ def main() -> None:
     args = parser.parse_args()
 
     module = importlib.import_module(args.config)
-    raw: dict = module.selector()
+    raw = module.selector()
 
-    input_path: str = raw["input"]
-    output_path: str = raw["output"]
-    selector_cfg = raw["selector"]
+    if isinstance(raw, CustomOmegaConfig):
+        cfg = raw
+        input_path: str = cfg["input"]  # type: ignore[assignment]
+        output_path: str = cfg["output"]  # type: ignore[assignment]
+        selector_cfg: CustomOmegaConfig = cfg
+    else:
+        input_path = raw["input"]
+        output_path = raw["output"]
+        selector_cfg = raw["selector"]
 
     samples = read_jsonl(input_path)
-    selector = resolve_target(selector_cfg)
-    assert hasattr(selector, "select")
-    selected = selector.select(samples)  # type: ignore[attr-defined,union-attr]
+    selector = selector_cfg.create()
+    selected = selector.select(samples)  # type: ignore[union-attr]
     write_jsonl(selected, output_path)
     print(f"Selected {len(selected)} samples -> {output_path}")
 

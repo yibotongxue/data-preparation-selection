@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Protocol
+from collections.abc import Mapping, Sequence
+from typing import Any, Protocol
 
 
 class Selector(Protocol):
@@ -11,7 +12,7 @@ class Selector(Protocol):
     satisfies this protocol.
     """
 
-    def select(self, samples: list[dict]) -> list[dict]:
+    def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         """Select samples from the candidate pool.
 
         Args:

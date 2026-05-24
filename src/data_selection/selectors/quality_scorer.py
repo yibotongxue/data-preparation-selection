@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 import pandas as pd
 from dataflow.operators.eval import FineWebEduScorer, PairQualScorer
 
+from data_selection.config import MaybeConfig, maybe_create
 from data_selection.utils import extract_text
 
 
 class QualityScorerSelector:
-    """Select samples by educational/quality score using DataFlow scorers.
-
-    Supports strategies: "fineweb_edu", "pairqual", "composite".
-    """
+    """Select samples by educational/quality score using DataFlow scorers."""
 
     def __init__(
         self,
@@ -20,8 +21,8 @@ class QualityScorerSelector:
         device: str = "cuda",
         model_cache_dir: str = "./dataflow_cache",
         lang: str = "en",
-        edu_scorer: FineWebEduScorer | None = None,
-        pq_scorer: PairQualScorer | None = None,
+        edu_scorer: MaybeConfig[FineWebEduScorer] = None,
+        pq_scorer: MaybeConfig[PairQualScorer] = None,
     ) -> None:
         if strategy not in ("fineweb_edu", "pairqual", "composite"):
             raise ValueError(f"Unknown strategy: {strategy}")
@@ -30,20 +31,22 @@ class QualityScorerSelector:
         self.text_key = text_key
 
         if strategy in ("fineweb_edu", "composite"):
-            self.edu_scorer: FineWebEduScorer | None = edu_scorer or FineWebEduScorer(
-                model_cache_dir=model_cache_dir, device=device
-            )
+            self.edu_scorer: FineWebEduScorer | None = maybe_create(
+                edu_scorer
+            ) or FineWebEduScorer(model_cache_dir=model_cache_dir, device=device)
         else:
             self.edu_scorer = None
 
         if strategy in ("pairqual", "composite"):
-            self.pq_scorer: PairQualScorer | None = pq_scorer or PairQualScorer(
+            self.pq_scorer: PairQualScorer | None = maybe_create(
+                pq_scorer
+            ) or PairQualScorer(
                 model_cache_dir=model_cache_dir, device=device, lang=lang
             )
         else:
             self.pq_scorer = None
 
-    def select(self, samples: list[dict]) -> list[dict]:
+    def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 
@@ -59,7 +62,7 @@ class QualityScorerSelector:
         if self.pq_scorer is not None:
             pq_scores = self.pq_scorer.eval(df, input_key=self.text_key).tolist()
 
-        scored: list[tuple[float, float | None, float | None, dict]] = []
+        scored: list[tuple[float, float | None, float | None, Mapping[str, Any]]] = []
         for i, s in enumerate(samples):
             e = float(edu_scores[i]) if edu_scores else None
             p = float(pq_scores[i]) if pq_scores else None

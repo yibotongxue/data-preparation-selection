@@ -1,40 +1,41 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 import pandas as pd
 from dataflow.core import LLMServingABC
 from dataflow.operators.eval import MetaScorer
 
+from data_selection.config import MaybeConfig, maybe_create
 from data_selection.utils import extract_text
 
 
 class LLMAsSelector:
-    """Use an LLM to score and rank samples via DataFlow's MetaScorer.
-
-    MetaScorer evaluates text across 6 dimensions (Text Structure,
-    Diversity, Fluency, Safety, Educational Value, Content Accuracy).
-    """
+    """Use an LLM to score and rank samples via DataFlow's MetaScorer."""
 
     def __init__(
         self,
         k: int = 100,
         text_key: str = "text",
-        llm_serving: LLMServingABC | None = None,
-        dimensions: list[dict] | None = None,
-        scorer: MetaScorer | None = None,
+        llm_serving: MaybeConfig[LLMServingABC] = None,
+        dimensions: list[dict[str, Any]] | None = None,
+        scorer: MaybeConfig[MetaScorer] = None,
     ) -> None:
         self.k = k
         self.text_key = text_key
+        scorer = maybe_create(scorer)
         if scorer is not None:
             self.scorer: MetaScorer | None = scorer
         elif llm_serving is not None:
             self.scorer = MetaScorer(
-                llm_serving=llm_serving,
+                llm_serving=maybe_create(llm_serving),  # type: ignore[arg-type]
                 dimensions=dimensions or [],
             )
         else:
             self.scorer = None
 
-    def select(self, samples: list[dict]) -> list[dict]:
+    def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 
@@ -52,7 +53,7 @@ class LLMAsSelector:
         paired = list(zip(avg_scores, samples, strict=True))
         paired.sort(key=lambda x: x[0], reverse=True)
 
-        result: list[dict] = []
+        result: list[dict[str, Any]] = []
         for i, (score, s) in enumerate(paired[: min(self.k, len(paired))]):
             orig_idx = samples.index(s)
             dim_scores: list[float] | None = (

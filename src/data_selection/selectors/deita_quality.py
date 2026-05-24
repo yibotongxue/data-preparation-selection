@@ -1,18 +1,19 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from typing import Any
+
 import pandas as pd
 from dataflow.operators.eval import (
     DeitaComplexityScorer,
     DeitaQualityScorer,
 )
 
+from data_selection.config import MaybeConfig, maybe_create
+
 
 class DeitaQualitySelector:
-    """Select samples by Deita quality x complexity composite score.
-
-    Uses DataFlow's DeitaQualityScorer and DeitaComplexityScorer
-    (Llama-based models from hkust-nlp).
-    """
+    """Select samples by Deita quality x complexity composite score."""
 
     def __init__(
         self,
@@ -22,20 +23,22 @@ class DeitaQualitySelector:
         max_length: int = 512,
         instruction_key: str = "instruction",
         output_key: str = "output",
-        quality_scorer: DeitaQualityScorer | None = None,
-        complexity_scorer: DeitaComplexityScorer | None = None,
+        quality_scorer: MaybeConfig[DeitaQualityScorer] = None,
+        complexity_scorer: MaybeConfig[DeitaComplexityScorer] = None,
     ) -> None:
         self.k = k
         self.instruction_key = instruction_key
         self.output_key = output_key
-        self.quality_scorer = quality_scorer or DeitaQualityScorer(
+        self.quality_scorer = maybe_create(quality_scorer) or DeitaQualityScorer(
             device=device, model_cache_dir=model_cache_dir, max_length=max_length
         )
-        self.complexity_scorer = complexity_scorer or DeitaComplexityScorer(
+        self.complexity_scorer = maybe_create(
+            complexity_scorer
+        ) or DeitaComplexityScorer(
             device=device, model_cache_dir=model_cache_dir, max_length=max_length
         )
 
-    def select(self, samples: list[dict]) -> list[dict]:
+    def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 
@@ -51,7 +54,7 @@ class DeitaQualitySelector:
             input_output_key=self.output_key,
         )
 
-        scored: list[tuple[float, float, float, dict]] = []
+        scored: list[tuple[float, float, float, Mapping[str, Any]]] = []
         for i, s in enumerate(samples):
             q = float(q_scores[i])
             c = float(c_scores[i])
