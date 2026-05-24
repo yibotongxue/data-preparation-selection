@@ -4,7 +4,7 @@ from data_selection.utils import extract_text
 class LengthBasedSelection:
     """Select samples by instruction+output or conversations length."""
 
-    def select(self, samples: list[dict], k: int, **kwargs) -> list[dict]:
+    def select(self, samples: list[dict], k: int) -> list[dict]:
         if k <= 0 or not samples:
             return []
 
@@ -12,4 +12,7 @@ class LengthBasedSelection:
             return len(extract_text(s))
 
         scored = sorted(samples, key=_length, reverse=True)
-        return scored[: min(k, len(scored))]
+        return [
+            {**s, "meta": {"selector": "LengthBasedSelection", "length": _length(s)}}
+            for s in scored[: min(k, len(scored))]
+        ]

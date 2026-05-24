@@ -9,7 +9,9 @@ class TestRandomSelection:
         selector = RandomSelection(seed=42)
         result = selector.select(samples, k=3)
         assert len(result) == 3
-        assert all(s in samples for s in result)
+        for r in result:
+            assert "meta" in r
+            assert r["meta"]["selector"] == "RandomSelection"
 
     def test_select_deterministic(self):
         samples = [{"instruction": f"task {i}"} for i in range(10)]

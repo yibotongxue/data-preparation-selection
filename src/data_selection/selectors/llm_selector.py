@@ -45,10 +45,31 @@ class LLMAsSelector:
 
         if self.scorer is not None:
             scores_2d = self.scorer.eval(df, input_key=self.text_key)
-            scores = [float(sum(row)) / len(row) for row in scores_2d]
+            avg_scores = [float(sum(row)) / len(row) for row in scores_2d]
         else:
-            scores = [float(len(extract_text(s).split())) for s in samples]
+            scores_2d = None
+            avg_scores = [float(len(extract_text(s).split())) for s in samples]
 
-        paired = list(zip(scores, samples, strict=True))
+        paired = list(zip(avg_scores, samples, strict=True))
         paired.sort(key=lambda x: x[0], reverse=True)
-        return [s for _, s in paired[: min(k, len(paired))]]
+
+        result = []
+        for i, (score, s) in enumerate(paired[: min(k, len(paired))]):
+            orig_idx = samples.index(s)
+            dim_scores = (
+                [round(float(v), 4) for v in scores_2d[orig_idx]]
+                if scores_2d is not None
+                else None
+            )
+            result.append(
+                {
+                    **s,
+                    "meta": {
+                        "selector": "LLMAsSelector",
+                        "dimension_scores": dim_scores,
+                        "average_score": round(score, 4),
+                    },
+                }
+            )
+
+        return result

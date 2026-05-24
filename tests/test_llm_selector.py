@@ -15,7 +15,8 @@ class TestLLMAsSelector:
 
         result = LLMAsSelector(scorer=mock).select(samples, k=2)
         assert len(result) == 2
-        assert result[0] == samples[1]
+        assert result[0]["meta"]["average_score"] == 5.0
+        assert result[0]["meta"]["dimension_scores"] == [5.0] * 6
 
     def test_select_no_scorer_fallback(self):
         samples = [
@@ -25,7 +26,7 @@ class TestLLMAsSelector:
         ]
         result = LLMAsSelector().select(samples, k=2)
         assert len(result) == 2
-        assert result[0] == samples[1]
+        assert result[0]["meta"]["dimension_scores"] is None
 
     def test_select_k_zero(self):
         result = LLMAsSelector().select([{"text": "hi"}], k=0)

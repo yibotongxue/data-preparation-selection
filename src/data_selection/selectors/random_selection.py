@@ -7,8 +7,12 @@ class RandomSelection:
     def __init__(self, seed: int | None = None) -> None:
         self.seed = seed
 
-    def select(self, samples: list[dict], k: int, **kwargs) -> list[dict]:
+    def select(self, samples: list[dict], k: int) -> list[dict]:
         if k <= 0 or not samples:
             return []
         rng = random.Random(self.seed)
-        return rng.sample(samples, min(k, len(samples)))
+        chosen = rng.sample(samples, min(k, len(samples)))
+        return [
+            {**s, "meta": {"selector": "RandomSelection", "seed": self.seed}}
+            for s in chosen
+        ]

@@ -52,8 +52,21 @@ class DeitaQualitySelection:
 
         scored = []
         for i, s in enumerate(samples):
-            composite = float(q_scores[i]) * float(c_scores[i])
-            scored.append((composite, s))
+            q = float(q_scores[i])
+            c = float(c_scores[i])
+            composite = q * c
+            scored.append((composite, q, c, s))
 
         scored.sort(key=lambda x: x[0], reverse=True)
-        return [s for _, s in scored[: min(k, len(scored))]]
+        return [
+            {
+                **s,
+                "meta": {
+                    "selector": "DeitaQualitySelection",
+                    "quality_score": round(q, 4),
+                    "complexity_score": round(c, 4),
+                    "composite_score": round(composite, 4),
+                },
+            }
+            for composite, q, c, s in scored[: min(k, len(scored))]
+        ]

@@ -1,4 +1,6 @@
-from data_selection.selectors.embedding_similarity import EmbeddingSimilaritySelection
+from data_selection.selectors.embedding_similarity import (
+    EmbeddingSimilaritySelection,
+)
 
 
 class TestEmbeddingSimilaritySelection:
@@ -12,6 +14,7 @@ class TestEmbeddingSimilaritySelection:
         result = EmbeddingSimilaritySelection(domain_proxy=proxy).select(samples, k=2)
         assert len(result) == 2
         assert result[0]["instruction"] == "a"
+        assert result[0]["meta"]["similarity"] == 1.0
 
     def test_select_auto_proxy(self):
         samples = [
@@ -21,6 +24,8 @@ class TestEmbeddingSimilaritySelection:
         ]
         result = EmbeddingSimilaritySelection().select(samples, k=2)
         assert len(result) == 2
+        for r in result:
+            assert "meta" in r
 
     def test_select_k_zero(self):
         samples = [{"instruction": "a", "embedding": [1.0, 0.0]}]

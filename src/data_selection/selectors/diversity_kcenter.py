@@ -18,7 +18,7 @@ class DiversityKCenterSelection:
         self.embedding_key = embedding_key
         self.seed = seed
 
-    def select(self, samples: list[dict], k: int, **kwargs) -> list[dict]:
+    def select(self, samples: list[dict], k: int) -> list[dict]:
         if k <= 0 or not samples:
             return []
 
@@ -41,4 +41,13 @@ class DiversityKCenterSelection:
             best = int(np.argmax(min_dists))
             selected.append(best)
 
-        return [valid[i] for i in selected]
+        return [
+            {
+                **valid[i],
+                "meta": {
+                    "selector": "DiversityKCenterSelection",
+                    "min_distance": round(float(min_dists[i]), 6),
+                },
+            }
+            for i in selected
+        ]

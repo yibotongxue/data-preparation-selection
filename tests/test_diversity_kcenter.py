@@ -11,6 +11,9 @@ class TestDiversityKCenterSelection:
         ]
         result = DiversityKCenterSelection(seed=42).select(samples, k=2)
         assert len(result) == 2
+        for r in result:
+            assert "meta" in r
+            assert "min_distance" in r["meta"]
 
     def test_select_k_zero(self):
         samples = [{"instruction": "a", "embedding": [1.0, 0.0]}]

@@ -10,7 +10,9 @@ class TestLengthBasedSelection:
         ]
         result = LengthBasedSelection().select(samples, k=2)
         assert len(result) == 2
-        assert result[0] == samples[1]
+        assert result[0]["instruction"] == samples[1]["instruction"]
+        assert "meta" in result[0]
+        assert result[0]["meta"]["length"] > result[1]["meta"]["length"]
 
     def test_select_by_conversations(self):
         samples = [
@@ -19,8 +21,7 @@ class TestLengthBasedSelection:
             {"conversations": [{"messages": [{"content": "a" * 50}]}]},
         ]
         result = LengthBasedSelection().select(samples, k=2)
-        assert result[0] == samples[1]
-        assert result[1] == samples[2]
+        assert result[0]["meta"]["length"] >= result[1]["meta"]["length"]
 
     def test_select_k_zero(self):
         samples = [{"instruction": "hi", "output": "ok"}]

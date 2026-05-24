@@ -9,7 +9,7 @@ class SourceBalancedRandomSelection:
         self.source_key = source_key
         self.seed = seed
 
-    def select(self, samples: list[dict], k: int, **kwargs) -> list[dict]:
+    def select(self, samples: list[dict], k: int) -> list[dict]:
         if k <= 0 or not samples:
             return []
         rng = random.Random(self.seed)
@@ -29,6 +29,15 @@ class SourceBalancedRandomSelection:
             take = per_source + (1 if i < remainder else 0)
             take = min(take, len(pool))
             if take > 0:
-                selected.extend(rng.sample(pool, take))
+                for s in rng.sample(pool, take):
+                    selected.append(
+                        {
+                            **s,
+                            "meta": {
+                                "selector": "SourceBalancedRandomSelection",
+                                "source": src,
+                            },
+                        }
+                    )
 
         return selected

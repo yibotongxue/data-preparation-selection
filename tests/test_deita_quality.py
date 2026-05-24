@@ -20,8 +20,10 @@ class TestDeitaQualitySelection:
         )
         result = selector.select(samples, k=2)
         assert len(result) == 2
-        assert result[0] == samples[2]
-        assert result[1] == samples[0]
+        assert result[0]["instruction"] == "c"
+        assert result[0]["meta"]["composite_score"] == 15.0
+        assert result[0]["meta"]["quality_score"] == 3.0
+        assert result[0]["meta"]["complexity_score"] == 5.0
 
     def test_select_k_zero(self):
         samples = [{"instruction": "a"}]

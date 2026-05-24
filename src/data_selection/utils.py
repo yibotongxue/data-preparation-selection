@@ -1,3 +1,25 @@
+import json
+from pathlib import Path
+
+
+def read_jsonl(path: str | Path) -> list[dict]:
+    """Read samples from a JSONL file."""
+    samples = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                samples.append(json.loads(line))
+    return samples
+
+
+def write_jsonl(samples: list[dict], path: str | Path) -> None:
+    """Write samples to a JSONL file."""
+    with open(path, "w", encoding="utf-8") as f:
+        for s in samples:
+            f.write(json.dumps(s, ensure_ascii=False) + "\n")
+
+
 def extract_text(sample: dict) -> str:
     """Extract text content from a sample in unified format.
 

@@ -19,8 +19,8 @@ class TestPerplexityBasedSelection:
             samples, k=2
         )
         assert len(result) == 2
-        assert result[0] == samples[1]
-        assert result[1] == samples[0]
+        assert result[0]["meta"]["ppl"] == 5.0
+        assert result[1]["meta"]["ppl"] == 10.0
 
     def test_select_high_ppl(self):
         samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
@@ -30,8 +30,8 @@ class TestPerplexityBasedSelection:
         result = PerplexityBasedSelection(strategy="high", scorer=mock).select(
             samples, k=2
         )
-        assert result[0] == samples[2]
-        assert result[1] == samples[0]
+        assert result[0]["meta"]["ppl"] == 20.0
+        assert result[1]["meta"]["ppl"] == 10.0
 
     def test_select_mid_ppl(self):
         samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
@@ -42,6 +42,7 @@ class TestPerplexityBasedSelection:
             samples, k=2
         )
         assert len(result) == 2
+        assert result[0]["meta"]["strategy"] == "mid"
 
     def test_select_k_zero(self):
         mock = MagicMock()

@@ -62,13 +62,26 @@ class QualityScorerSelection:
 
         scored = []
         for i, s in enumerate(samples):
+            e = float(edu_scores[i]) if edu_scores else None
+            p = float(pq_scores[i]) if pq_scores else None
             if self.strategy == "fineweb_edu":
-                score = float(edu_scores[i])
+                score = e or 0.0
             elif self.strategy == "pairqual":
-                score = float(pq_scores[i])
+                score = p or 0.0
             else:
-                score = (float(edu_scores[i]) + float(pq_scores[i])) / 2.0
-            scored.append((score, s))
+                score = ((e or 0.0) + (p or 0.0)) / 2.0
+            scored.append((score, e, p, s))
 
         scored.sort(key=lambda x: x[0], reverse=True)
-        return [s for _, s in scored[: min(k, len(scored))]]
+        return [
+            {
+                **s,
+                "meta": {
+                    "selector": "QualityScorerSelection",
+                    "strategy": self.strategy,
+                    "fineweb_edu_score": round(e, 6) if e is not None else None,
+                    "pairqual_score": round(p, 6) if p is not None else None,
+                },
+            }
+            for score, e, p, s in scored[: min(k, len(scored))]
+        ]

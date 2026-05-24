@@ -18,7 +18,7 @@ class TestQualityScorerSelection:
         selector = QualityScorerSelection(strategy="fineweb_edu", edu_scorer=mock_edu)
         result = selector.select(samples, k=2)
         assert len(result) == 2
-        assert result[0] == samples[2]
+        assert result[0]["meta"]["fineweb_edu_score"] == 0.9
 
     def test_select_pairqual(self):
         samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
@@ -27,7 +27,7 @@ class TestQualityScorerSelection:
 
         selector = QualityScorerSelection(strategy="pairqual", pq_scorer=mock_pq)
         result = selector.select(samples, k=2)
-        assert result[0] == samples[1]
+        assert result[0]["meta"]["pairqual_score"] == 0.9
 
     def test_select_composite(self):
         samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
@@ -41,6 +41,7 @@ class TestQualityScorerSelection:
         )
         result = selector.select(samples, k=2)
         assert len(result) == 2
+        assert result[0]["meta"]["strategy"] == "composite"
 
     def test_select_k_zero(self):
         result = QualityScorerSelection(

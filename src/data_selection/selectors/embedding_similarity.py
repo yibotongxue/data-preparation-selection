@@ -24,23 +24,33 @@ class EmbeddingSimilaritySelection:
             return []
 
         proxy = self.domain_proxy
-        valid = [s for s in samples if self.embedding_key in s]
+        valid = [(i, s) for i, s in enumerate(samples) if self.embedding_key in s]
         if not valid:
             return []
+        indices, valid_samples = zip(*valid)
 
         if proxy is None:
-            emb_matrix = np.array([s[self.embedding_key] for s in valid])
+            emb_matrix = np.array([s[self.embedding_key] for s in valid_samples])
             proxy = emb_matrix.mean(axis=0).tolist()
 
         proxy_arr = np.array(proxy, dtype=np.float64)
-        scores = []
-        for s in valid:
+        scored = []
+        for orig_i, s in zip(indices, valid_samples):
             emb = np.array(s[self.embedding_key], dtype=np.float64)
             sim = _cosine_similarity(emb, proxy_arr)
-            scores.append((sim, s))
+            scored.append((sim, orig_i, s))
 
-        scores.sort(key=lambda x: x[0], reverse=True)
-        return [s for _, s in scores[: min(k, len(scores))]]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [
+            {
+                **s,
+                "meta": {
+                    "selector": "EmbeddingSimilaritySelection",
+                    "similarity": round(sim, 6),
+                },
+            }
+            for sim, _, s in scored[: min(k, len(scored))]
+        ]
 
 
 def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:

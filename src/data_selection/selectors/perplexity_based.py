@@ -41,14 +41,26 @@ class PerplexityBasedSelection:
             df[self.text_key] = [extract_text(s) for s in samples]
 
         ppl_scores = self.scorer.eval(df, input_key=self.text_key)
-        valid = [(float(ppl_scores[i]), s) for i, s in enumerate(samples)]
+        ordered: list[tuple[float, int]] = []
+        for i, s in enumerate(samples):
+            ordered.append((float(ppl_scores[i]), i))
 
         if self.strategy == "low":
-            valid.sort(key=lambda x: x[0])
+            ordered.sort(key=lambda x: x[0])
         elif self.strategy == "high":
-            valid.sort(key=lambda x: x[0], reverse=True)
+            ordered.sort(key=lambda x: x[0], reverse=True)
         else:
-            mean_ppl = sum(v[0] for v in valid) / len(valid)
-            valid.sort(key=lambda x: abs(math.log(x[0]) - math.log(mean_ppl)))
+            mean_ppl = sum(v[0] for v in ordered) / len(ordered)
+            ordered.sort(key=lambda x: abs(math.log(x[0]) - math.log(mean_ppl)))
 
-        return [s for _, s in valid[: min(k, len(valid))]]
+        return [
+            {
+                **samples[idx],
+                "meta": {
+                    "selector": "PerplexityBasedSelection",
+                    "ppl": ppl,
+                    "strategy": self.strategy,
+                },
+            }
+            for ppl, idx in ordered[: min(k, len(ordered))]
+        ]
