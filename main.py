@@ -3,16 +3,16 @@ from data_selection import RandomSelection
 
 def main() -> None:
     samples = [
-        {"text": "sample 1", "source": "a"},
-        {"text": "sample 2", "source": "b"},
-        {"text": "sample 3", "source": "a"},
-        {"text": "sample 4", "source": "b"},
-        {"text": "sample 5", "source": "c"},
+        {"instruction": "task 1", "output": "result 1", "source": "a"},
+        {"instruction": "task 2", "output": "result 2", "source": "b"},
+        {"instruction": "task 3", "output": "result 3", "source": "a"},
+        {"instruction": "task 4", "output": "result 4", "source": "b"},
+        {"instruction": "task 5", "output": "result 5", "source": "c"},
     ]
     selector = RandomSelection(seed=42)
     selected = selector.select(samples, k=3)
     for s in selected:
-        print(s["text"])
+        print(s["instruction"])
 
 
 if __name__ == "__main__":
