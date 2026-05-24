@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
-if TYPE_CHECKING:
-    from data_selection.config import CustomOmegaConfig
-    from data_selection.protocol import Selector
+from omegaconf import DictConfig
 
 
 class Message(TypedDict):
@@ -50,4 +48,4 @@ class SelectionConfig(TypedDict):
     input: str
     output: str
     k: int
-    selector: CustomOmegaConfig[Selector]
+    selector: DictConfig
