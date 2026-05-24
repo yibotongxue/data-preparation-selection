@@ -1,11 +1,11 @@
-import math
+import numpy as np
 
 
 class EmbeddingSimilaritySelection:
-    """Near algorithm: select samples most similar to a domain proxy embedding.
+    """Near algorithm (OpenDCAI/DataFlex): select samples most similar to
+    a domain proxy embedding via cosine similarity.
 
-    Computes cosine similarity between each sample's embedding and a domain
-    proxy embedding (e.g. mean of target domain examples).
+    Uses numpy for vectorized cosine similarity computation.
     """
 
     def __init__(self, embedding_key: str = "embedding") -> None:
@@ -21,38 +21,29 @@ class EmbeddingSimilaritySelection:
         if k <= 0 or not samples:
             return []
 
-        proxy = domain_proxy
-        if proxy is None:
-            proxy = kwargs.get("domain_proxy")
-        if proxy is None:
-            embeddings = [
-                s[self.embedding_key] for s in samples if self.embedding_key in s
-            ]
-            if not embeddings:
-                return []
-            dim = len(embeddings[0])
-            proxy = [
-                sum(e[i] for e in embeddings) / len(embeddings) for i in range(dim)
-            ]
-
+        proxy = domain_proxy or kwargs.get("domain_proxy")
         valid = [s for s in samples if self.embedding_key in s]
         if not valid:
             return []
 
-        scored = []
+        if proxy is None:
+            emb_matrix = np.array([s[self.embedding_key] for s in valid])
+            proxy = emb_matrix.mean(axis=0).tolist()
+
+        proxy_arr = np.array(proxy, dtype=np.float64)
+        scores = []
         for s in valid:
-            emb = s[self.embedding_key]
-            sim = _cosine_similarity(emb, proxy)
-            scored.append((sim, s))
+            emb = np.array(s[self.embedding_key], dtype=np.float64)
+            sim = _cosine_similarity(emb, proxy_arr)
+            scores.append((sim, s))
 
-        scored.sort(key=lambda x: x[0], reverse=True)
-        return [s for _, s in scored[: min(k, len(scored))]]
+        scores.sort(key=lambda x: x[0], reverse=True)
+        return [s for _, s in scores[: min(k, len(scores))]]
 
 
-def _cosine_similarity(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b, strict=True))
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(y * y for y in b))
+def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
     if norm_a == 0 or norm_b == 0:
         return 0.0
-    return dot / (norm_a * norm_b)
+    return float(np.dot(a, b) / (norm_a * norm_b))

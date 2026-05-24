@@ -1,12 +1,15 @@
-import math
 import random
+
+import numpy as np
 
 
 class DiversityKCenterSelection:
-    """TSDS algorithm: greedy k-center in embedding space for maximum diversity.
+    """TSDS algorithm (OpenDCAI/DataFlex): greedy k-center in embedding
+    space for maximum diversity coverage.
 
     Starting from a random seed, iteratively selects the sample farthest
-    from all already-selected samples in embedding space.
+    from all already-selected samples in Euclidean embedding space.
+    Uses numpy for vectorized distance computation.
     """
 
     def __init__(
@@ -18,38 +21,24 @@ class DiversityKCenterSelection:
     def select(self, samples: list[dict], k: int, **kwargs) -> list[dict]:
         if k <= 0 or not samples:
             return []
-        k = min(k, len(samples))
 
         valid = [s for s in samples if self.embedding_key in s]
         if not valid:
             return []
+
+        embeddings = np.array([s[self.embedding_key] for s in valid], dtype=np.float64)
         k = min(k, len(valid))
 
         rng = random.Random(self.seed)
-        selected_idx: list[int] = []
-        min_dist: list[float] = [float("inf")] * len(valid)
-
-        first = rng.randrange(len(valid))
-        selected_idx.append(first)
+        selected: list[int] = [rng.randrange(len(valid))]
+        min_dists: np.ndarray = np.full(len(valid), np.inf)
 
         for _ in range(1, k):
-            last_emb = valid[selected_idx[-1]][self.embedding_key]
-            best_idx = -1
-            best_dist = -1.0
-            for i in range(len(valid)):
-                if i in selected_idx:
-                    continue
-                d = _euclidean_distance(valid[i][self.embedding_key], last_emb)
-                if d < min_dist[i]:
-                    min_dist[i] = d
-                if min_dist[i] > best_dist:
-                    best_dist = min_dist[i]
-                    best_idx = i
-            if best_idx >= 0:
-                selected_idx.append(best_idx)
+            last_emb = embeddings[selected[-1]]
+            dists = np.linalg.norm(embeddings - last_emb, axis=1)
+            min_dists = np.minimum(min_dists, dists)
+            min_dists[selected] = -1.0
+            best = int(np.argmax(min_dists))
+            selected.append(best)
 
-        return [valid[i] for i in selected_idx]
-
-
-def _euclidean_distance(a: list[float], b: list[float]) -> float:
-    return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b, strict=True)))
+        return [valid[i] for i in selected]
