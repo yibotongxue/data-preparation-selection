@@ -19,6 +19,7 @@ class PerplexityBasedSelector:
 
     def __init__(
         self,
+        k: int = 100,
         strategy: str = "low",
         text_key: str = "text",
         lang: str = "en",
@@ -27,12 +28,13 @@ class PerplexityBasedSelector:
     ) -> None:
         if strategy not in ("low", "high", "mid"):
             raise ValueError(f"Unknown strategy: {strategy}")
+        self.k = k
         self.strategy = strategy
         self.text_key = text_key
         self.scorer = scorer or PerplexityScorer(lang=lang, model_name=model_name)
 
-    def select(self, samples: list[dict], k: int) -> list[dict]:
-        if k <= 0 or not samples:
+    def select(self, samples: list[dict]) -> list[dict]:
+        if self.k <= 0 or not samples:
             return []
 
         df = pd.DataFrame(samples)
@@ -61,5 +63,5 @@ class PerplexityBasedSelector:
                     "strategy": self.strategy,
                 },
             }
-            for ppl, idx in ordered[: min(k, len(ordered))]
+            for ppl, idx in ordered[: min(self.k, len(ordered))]
         ]

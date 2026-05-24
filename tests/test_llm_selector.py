@@ -5,16 +5,10 @@ from data_selection.selectors.llm_selector import LLMAsSelector
 
 class TestLLMAsSelector:
     def test_select_with_scorer(self):
-        samples = [
-            {"text": "short"},
-            {"text": "a" * 100},
-            {"text": "medium"},
-        ]
+        samples = [{"text": "short"}, {"text": "a" * 100}, {"text": "medium"}]
         mock = MagicMock()
         mock.eval.return_value = [[3.0] * 6, [5.0] * 6, [1.0] * 6]
-
-        result = LLMAsSelector(scorer=mock).select(samples, k=2)
-        assert len(result) == 2
+        result = LLMAsSelector(k=2, scorer=mock).select(samples)
         assert result[0]["meta"]["average_score"] == 5.0
         assert result[0]["meta"]["dimension_scores"] == [5.0] * 6
 
@@ -24,14 +18,14 @@ class TestLLMAsSelector:
             {"instruction": "q", "output": "hello world " * 10},
             {"instruction": "q", "output": "ok"},
         ]
-        result = LLMAsSelector().select(samples, k=2)
+        result = LLMAsSelector(k=2).select(samples)
         assert len(result) == 2
         assert result[0]["meta"]["dimension_scores"] is None
 
     def test_select_k_zero(self):
-        result = LLMAsSelector().select([{"text": "hi"}], k=0)
+        result = LLMAsSelector(k=0).select([{"text": "hi"}])
         assert result == []
 
     def test_select_empty(self):
-        result = LLMAsSelector().select([], k=3)
+        result = LLMAsSelector(k=3).select([])
         assert result == []

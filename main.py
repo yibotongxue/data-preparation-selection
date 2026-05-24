@@ -9,8 +9,8 @@ def main() -> None:
         {"instruction": "task 4", "output": "result 4", "source": "b"},
         {"instruction": "task 5", "output": "result 5", "source": "c"},
     ]
-    selector = RandomSelector(seed=42)
-    selected = selector.select(samples, k=3)
+    selector = RandomSelector(k=3, seed=42)
+    selected = selector.select(samples)
     for s in selected:
         print(s["instruction"])
 

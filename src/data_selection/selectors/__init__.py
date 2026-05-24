@@ -1,4 +1,4 @@
-from data_selection.composite import CompositeSelector
+from data_selection.selectors.composite import CompositeSelector
 from data_selection.selectors.deita_quality import DeitaQualitySelector
 from data_selection.selectors.diversity_kcenter import DiversityKCenterSelector
 from data_selection.selectors.embedding_similarity import (

@@ -6,28 +6,28 @@ import numpy as np
 class DiversityKCenterSelector:
     """TSDS algorithm (OpenDCAI/DataFlex): greedy k-center in embedding
     space for maximum diversity coverage.
-
-    Starting from a random seed, iteratively selects the sample farthest
-    from all already-selected samples in Euclidean embedding space.
-    Uses numpy for vectorized distance computation.
     """
 
     def __init__(
-        self, embedding_key: str = "embedding", seed: int | None = None
+        self,
+        k: int = 100,
+        embedding_key: str = "embedding",
+        seed: int | None = None,
     ) -> None:
+        self.k = k
         self.embedding_key = embedding_key
         self.seed = seed
 
-    def select(self, samples: list[dict], k: int) -> list[dict]:
-        if k <= 0 or not samples:
+    def select(self, samples: list[dict]) -> list[dict]:
+        if self.k <= 0 or not samples:
             return []
 
-        valid = [s for s in samples if self.embedding_key in s]
+        valid: list[dict] = [s for s in samples if self.embedding_key in s]
         if not valid:
             return []
 
         embeddings = np.array([s[self.embedding_key] for s in valid], dtype=np.float64)
-        k = min(k, len(valid))
+        k = min(self.k, len(valid))
 
         rng = random.Random(self.seed)
         selected: list[int] = [rng.randrange(len(valid))]

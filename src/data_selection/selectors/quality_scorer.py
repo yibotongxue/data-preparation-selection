@@ -7,14 +7,12 @@ from data_selection.utils import extract_text
 class QualityScorerSelector:
     """Select samples by educational/quality score using DataFlow scorers.
 
-    Supports three scoring strategies:
-      - "fineweb_edu": FineWebEduScorer (HuggingFaceTB/fineweb-edu-classifier)
-      - "pairqual": PairQualScorer (BGE-based, supports en/zh)
-      - "composite": average of both scores
+    Supports strategies: "fineweb_edu", "pairqual", "composite".
     """
 
     def __init__(
         self,
+        k: int = 100,
         strategy: str = "composite",
         text_key: str = "text",
         device: str = "cuda",
@@ -25,25 +23,26 @@ class QualityScorerSelector:
     ) -> None:
         if strategy not in ("fineweb_edu", "pairqual", "composite"):
             raise ValueError(f"Unknown strategy: {strategy}")
+        self.k = k
         self.strategy = strategy
         self.text_key = text_key
 
         if strategy in ("fineweb_edu", "composite"):
-            self.edu_scorer = edu_scorer or FineWebEduScorer(
+            self.edu_scorer: FineWebEduScorer | None = edu_scorer or FineWebEduScorer(
                 model_cache_dir=model_cache_dir, device=device
             )
         else:
             self.edu_scorer = None
 
         if strategy in ("pairqual", "composite"):
-            self.pq_scorer = pq_scorer or PairQualScorer(
+            self.pq_scorer: PairQualScorer | None = pq_scorer or PairQualScorer(
                 model_cache_dir=model_cache_dir, device=device, lang=lang
             )
         else:
             self.pq_scorer = None
 
-    def select(self, samples: list[dict], k: int) -> list[dict]:
-        if k <= 0 or not samples:
+    def select(self, samples: list[dict]) -> list[dict]:
+        if self.k <= 0 or not samples:
             return []
 
         df = pd.DataFrame(samples)
@@ -58,7 +57,7 @@ class QualityScorerSelector:
         if self.pq_scorer is not None:
             pq_scores = self.pq_scorer.eval(df, input_key=self.text_key).tolist()
 
-        scored = []
+        scored: list[tuple[float, float | None, float | None, dict]] = []
         for i, s in enumerate(samples):
             e = float(edu_scores[i]) if edu_scores else None
             p = float(pq_scores[i]) if pq_scores else None
@@ -81,5 +80,5 @@ class QualityScorerSelector:
                     "pairqual_score": round(p, 6) if p is not None else None,
                 },
             }
-            for score, e, p, s in scored[: min(k, len(scored))]
+            for score, e, p, s in scored[: min(self.k, len(scored))]
         ]

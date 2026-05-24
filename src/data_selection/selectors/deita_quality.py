@@ -9,12 +9,12 @@ class DeitaQualitySelector:
     """Select samples by Deita quality x complexity composite score.
 
     Uses DataFlow's DeitaQualityScorer and DeitaComplexityScorer
-    (Llama-based models from hkust-nlp) to score each sample, then
-    selects top-k by quality * complexity.
+    (Llama-based models from hkust-nlp).
     """
 
     def __init__(
         self,
+        k: int = 100,
         device: str = "cuda",
         model_cache_dir: str = "./dataflow_cache",
         max_length: int = 512,
@@ -23,6 +23,7 @@ class DeitaQualitySelector:
         quality_scorer: DeitaQualityScorer | None = None,
         complexity_scorer: DeitaComplexityScorer | None = None,
     ) -> None:
+        self.k = k
         self.instruction_key = instruction_key
         self.output_key = output_key
         self.quality_scorer = quality_scorer or DeitaQualityScorer(
@@ -32,8 +33,8 @@ class DeitaQualitySelector:
             device=device, model_cache_dir=model_cache_dir, max_length=max_length
         )
 
-    def select(self, samples: list[dict], k: int) -> list[dict]:
-        if k <= 0 or not samples:
+    def select(self, samples: list[dict]) -> list[dict]:
+        if self.k <= 0 or not samples:
             return []
 
         df = pd.DataFrame(samples)
@@ -48,7 +49,7 @@ class DeitaQualitySelector:
             input_output_key=self.output_key,
         )
 
-        scored = []
+        scored: list[tuple[float, float, float, dict]] = []
         for i, s in enumerate(samples):
             q = float(q_scores[i])
             c = float(c_scores[i])
@@ -66,5 +67,5 @@ class DeitaQualitySelector:
                     "composite_score": round(composite, 4),
                 },
             }
-            for composite, q, c, s in scored[: min(k, len(scored))]
+            for composite, q, c, s in scored[: min(self.k, len(scored))]
         ]
