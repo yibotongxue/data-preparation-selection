@@ -11,6 +11,7 @@ dependencies = [
     "omegaconf>=2.3.0",
     "open-dataflow>=1.0.5",
     "scikit-learn>=1.8.0",
+    "torch>=2.4.0",
 ]
 
 [tool.black]
@@ -25,6 +26,9 @@ src_paths = ["src", "tests"]
 
 [project.scripts]
 select = "data_selection.cli:main"
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cpu"
 
 [build-system]
 requires = ["uv_build>=0.9.5,<0.10.0"]
@@ -43,4 +47,4 @@ index-url = "https://mirrors.aliyun.com/pypi/simple"
 environments = ["sys_platform == 'linux'"]
 
 [tool.uv.sources]
-dataflex = { path = "../../../../tmp/dataflex" }
+dataflex = { git = "https://github.com/yibotongxue/DataFlex.git" }
