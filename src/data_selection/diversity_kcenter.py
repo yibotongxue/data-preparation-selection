@@ -1,10 +1,8 @@
 import math
 import random
 
-from data_selection.protocol import SelectionMethod
 
-
-class DiversityKCenterSelection(SelectionMethod):
+class DiversityKCenterSelection:
     """TSDS algorithm: greedy k-center in embedding space for maximum diversity.
 
     Starting from a random seed, iteratively selects the sample farthest
@@ -28,25 +26,27 @@ class DiversityKCenterSelection(SelectionMethod):
         k = min(k, len(valid))
 
         rng = random.Random(self.seed)
-        selected_idx: set[int] = set()
+        selected_idx: list[int] = []
         min_dist: list[float] = [float("inf")] * len(valid)
 
         first = rng.randrange(len(valid))
-        selected_idx.add(first)
+        selected_idx.append(first)
 
         for _ in range(1, k):
-            last_emb = valid[first][self.embedding_key]
+            last_emb = valid[selected_idx[-1]][self.embedding_key]
+            best_idx = -1
+            best_dist = -1.0
             for i in range(len(valid)):
                 if i in selected_idx:
                     continue
                 d = _euclidean_distance(valid[i][self.embedding_key], last_emb)
                 if d < min_dist[i]:
                     min_dist[i] = d
-
-            first = max(
-                (i for i in range(len(valid)) if i not in selected_idx),
-                key=lambda i: min_dist[i],
-            )
+                if min_dist[i] > best_dist:
+                    best_dist = min_dist[i]
+                    best_idx = i
+            if best_idx >= 0:
+                selected_idx.append(best_idx)
 
         return [valid[i] for i in selected_idx]
 
