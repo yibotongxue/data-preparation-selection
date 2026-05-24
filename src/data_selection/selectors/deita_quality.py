@@ -1,5 +1,3 @@
-from typing import Any
-
 import pandas as pd
 from dataflow.operators.eval import (
     DeitaComplexityScorer,
@@ -22,8 +20,8 @@ class DeitaQualitySelection:
         max_length: int = 512,
         instruction_key: str = "instruction",
         output_key: str = "output",
-        quality_scorer: Any = None,
-        complexity_scorer: Any = None,
+        quality_scorer: DeitaQualityScorer | None = None,
+        complexity_scorer: DeitaComplexityScorer | None = None,
     ) -> None:
         self.instruction_key = instruction_key
         self.output_key = output_key

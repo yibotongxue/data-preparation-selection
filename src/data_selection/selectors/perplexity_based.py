@@ -1,5 +1,4 @@
 import math
-from typing import Any
 
 import pandas as pd
 from dataflow.operators.eval import PerplexityScorer
@@ -24,7 +23,7 @@ class PerplexityBasedSelection:
         text_key: str = "text",
         lang: str = "en",
         model_name: str = "dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia",
-        scorer: Any = None,
+        scorer: PerplexityScorer | None = None,
     ) -> None:
         if strategy not in ("low", "high", "mid"):
             raise ValueError(f"Unknown strategy: {strategy}")

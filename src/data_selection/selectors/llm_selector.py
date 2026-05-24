@@ -1,6 +1,5 @@
-from typing import Any
-
 import pandas as pd
+from dataflow.core import LLMServingABC
 from dataflow.operators.eval import MetaScorer
 
 from data_selection.utils import extract_text
@@ -20,9 +19,9 @@ class LLMAsSelector:
     def __init__(
         self,
         text_key: str = "text",
-        llm_serving: Any = None,
-        dimensions: Any = None,
-        scorer: Any = None,
+        llm_serving: LLMServingABC | None = None,
+        dimensions: list[dict] | None = None,
+        scorer: MetaScorer | None = None,
     ) -> None:
         self.text_key = text_key
         if scorer is not None:

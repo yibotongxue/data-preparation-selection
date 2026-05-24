@@ -1,5 +1,3 @@
-from typing import Any
-
 import pandas as pd
 from dataflow.operators.eval import FineWebEduScorer, PairQualScorer
 
@@ -22,8 +20,8 @@ class QualityScorerSelection:
         device: str = "cuda",
         model_cache_dir: str = "./dataflow_cache",
         lang: str = "en",
-        edu_scorer: Any = None,
-        pq_scorer: Any = None,
+        edu_scorer: FineWebEduScorer | None = None,
+        pq_scorer: PairQualScorer | None = None,
     ) -> None:
         if strategy not in ("fineweb_edu", "pairqual", "composite"):
             raise ValueError(f"Unknown strategy: {strategy}")
