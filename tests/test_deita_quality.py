@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from unittest.mock import MagicMock
 
 from data_selection.selectors.deita_quality import DeitaQualitySelector

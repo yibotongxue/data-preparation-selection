@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pandas as pd
 from dataflow.core import LLMServingABC
 from dataflow.operators.eval import MetaScorer

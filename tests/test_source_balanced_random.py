@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from data_selection.selectors.source_balanced_random import (
     SourceBalancedRandomSelector,
 )

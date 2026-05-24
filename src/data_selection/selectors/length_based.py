@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from data_selection.utils import extract_text
 
 

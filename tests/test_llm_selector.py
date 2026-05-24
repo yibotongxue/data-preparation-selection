@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from unittest.mock import MagicMock
 
 from data_selection.selectors.llm_selector import LLMAsSelector
