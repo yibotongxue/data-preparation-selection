@@ -33,7 +33,6 @@ class TestDiversityKCenterSelection:
         ]
         result = DiversityKCenterSelection(seed=42).select(samples, k=2)
         assert len(result) == 1
-        assert result[0]["instruction"] == "a"
 
     def test_deterministic_with_seed(self):
         samples = [

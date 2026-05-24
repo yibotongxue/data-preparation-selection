@@ -49,8 +49,6 @@ class TestEmbeddingSimilaritySelection:
 
     def test_cosine_zero_vector(self):
         proxy = [0.0, 0.0]
-        samples = [
-            {"instruction": "a", "embedding": [1.0, 0.0]},
-        ]
+        samples = [{"instruction": "a", "embedding": [1.0, 0.0]}]
         result = EmbeddingSimilaritySelection().select(samples, k=1, domain_proxy=proxy)
         assert len(result) == 1

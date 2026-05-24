@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 
 from data_selection.perplexity_based import PerplexityBasedSelection
@@ -6,46 +8,49 @@ from data_selection.perplexity_based import PerplexityBasedSelection
 class TestPerplexityBasedSelection:
     def test_select_low_ppl(self):
         samples = [
-            {"instruction": "a", "ppl": 10.0},
-            {"instruction": "b", "ppl": 5.0},
-            {"instruction": "c", "ppl": 20.0},
+            {"text": "a"},
+            {"text": "b"},
+            {"text": "c"},
         ]
-        result = PerplexityBasedSelection(strategy="low").select(samples, k=2)
+        mock = MagicMock()
+        mock.eval.return_value = [10.0, 5.0, 20.0]
+
+        result = PerplexityBasedSelection(strategy="low", scorer=mock).select(
+            samples, k=2
+        )
         assert len(result) == 2
-        assert result[0]["ppl"] == 5.0
-        assert result[1]["ppl"] == 10.0
+        assert result[0] == samples[1]
+        assert result[1] == samples[0]
 
     def test_select_high_ppl(self):
-        samples = [
-            {"instruction": "a", "ppl": 10.0},
-            {"instruction": "b", "ppl": 5.0},
-            {"instruction": "c", "ppl": 20.0},
-        ]
-        result = PerplexityBasedSelection(strategy="high").select(samples, k=2)
-        assert result[0]["ppl"] == 20.0
-        assert result[1]["ppl"] == 10.0
+        samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
+        mock = MagicMock()
+        mock.eval.return_value = [10.0, 5.0, 20.0]
+
+        result = PerplexityBasedSelection(strategy="high", scorer=mock).select(
+            samples, k=2
+        )
+        assert result[0] == samples[2]
+        assert result[1] == samples[0]
 
     def test_select_mid_ppl(self):
-        samples = [
-            {"instruction": "a", "ppl": 10.0},
-            {"instruction": "b", "ppl": 50.0},
-            {"instruction": "c", "ppl": 20.0},
-        ]
-        result = PerplexityBasedSelection(strategy="mid").select(samples, k=2)
+        samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
+        mock = MagicMock()
+        mock.eval.return_value = [10.0, 50.0, 20.0]
+
+        result = PerplexityBasedSelection(strategy="mid", scorer=mock).select(
+            samples, k=2
+        )
         assert len(result) == 2
 
     def test_select_k_zero(self):
-        samples = [{"instruction": "a", "ppl": 10.0}]
-        result = PerplexityBasedSelection().select(samples, k=0)
+        mock = MagicMock()
+        result = PerplexityBasedSelection(scorer=mock).select([{"text": "a"}], k=0)
         assert result == []
 
     def test_select_empty(self):
-        result = PerplexityBasedSelection().select([], k=3)
-        assert result == []
-
-    def test_select_no_ppl_field(self):
-        samples = [{"instruction": "a"}, {"instruction": "b"}]
-        result = PerplexityBasedSelection().select(samples, k=2)
+        mock = MagicMock()
+        result = PerplexityBasedSelection(scorer=mock).select([], k=3)
         assert result == []
 
     def test_invalid_strategy(self):
