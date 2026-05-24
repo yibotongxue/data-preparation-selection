@@ -40,13 +40,13 @@ def _instantiate(d: dict[str, Any]) -> Any:
     target: str = d.pop("_target_")
     resolved: dict[str, Any] = {}
     for k, v in d.items():
-        if isinstance(v, DictConfig) and "_target_" in v:
-            resolved[k] = _instantiate(OmegaConf.to_container(v, resolve=True))  # type: ignore[arg-type]
+        if isinstance(v, dict) and "_target_" in v:
+            resolved[k] = _instantiate(v)
         elif isinstance(v, list):
             resolved[k] = [
                 (
-                    _instantiate(OmegaConf.to_container(item, resolve=True))  # type: ignore[arg-type]
-                    if isinstance(item, DictConfig) and "_target_" in item
+                    _instantiate(item)
+                    if isinstance(item, dict) and "_target_" in item
                     else item
                 )
                 for item in v
