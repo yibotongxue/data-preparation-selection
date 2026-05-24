@@ -19,10 +19,12 @@ class LLMAsSelector:
 
     def __init__(
         self,
+        text_key: str = "text",
         llm_serving: Any = None,
         dimensions: Any = None,
         scorer: Any = None,
     ) -> None:
+        self.text_key = text_key
         if scorer is not None:
             self.scorer = scorer
         elif llm_serving is not None:
@@ -33,17 +35,16 @@ class LLMAsSelector:
         else:
             self.scorer = None
 
-    def select(self, samples: list[dict], k: int, **kwargs) -> list[dict]:
+    def select(self, samples: list[dict], k: int) -> list[dict]:
         if k <= 0 or not samples:
             return []
 
         df = pd.DataFrame(samples)
-        text_key = kwargs.get("text_key", "text")
-        if text_key not in df.columns:
-            df[text_key] = [extract_text(s) for s in samples]
+        if self.text_key not in df.columns:
+            df[self.text_key] = [extract_text(s) for s in samples]
 
         if self.scorer is not None:
-            scores_2d = self.scorer.eval(df, input_key=text_key)
+            scores_2d = self.scorer.eval(df, input_key=self.text_key)
             scores = [float(sum(row)) / len(row) for row in scores_2d]
         else:
             scores = [float(len(extract_text(s).split())) for s in samples]

@@ -6,22 +6,24 @@ class EmbeddingSimilaritySelection:
     a domain proxy embedding via cosine similarity.
 
     Uses numpy for vectorized cosine similarity computation.
+
+    If domain_proxy is None at init time, it is computed as the mean
+    embedding of all candidates at select time.
     """
 
-    def __init__(self, embedding_key: str = "embedding") -> None:
-        self.embedding_key = embedding_key
-
-    def select(
+    def __init__(
         self,
-        samples: list[dict],
-        k: int,
+        embedding_key: str = "embedding",
         domain_proxy: list[float] | None = None,
-        **kwargs,
-    ) -> list[dict]:
+    ) -> None:
+        self.embedding_key = embedding_key
+        self.domain_proxy = domain_proxy
+
+    def select(self, samples: list[dict], k: int) -> list[dict]:
         if k <= 0 or not samples:
             return []
 
-        proxy = domain_proxy or kwargs.get("domain_proxy")
+        proxy = self.domain_proxy
         valid = [s for s in samples if self.embedding_key in s]
         if not valid:
             return []

@@ -18,6 +18,7 @@ class QualityScorerSelection:
     def __init__(
         self,
         strategy: str = "composite",
+        text_key: str = "text",
         device: str = "cuda",
         model_cache_dir: str = "./dataflow_cache",
         lang: str = "en",
@@ -27,6 +28,7 @@ class QualityScorerSelection:
         if strategy not in ("fineweb_edu", "pairqual", "composite"):
             raise ValueError(f"Unknown strategy: {strategy}")
         self.strategy = strategy
+        self.text_key = text_key
 
         if strategy in ("fineweb_edu", "composite"):
             self.edu_scorer = edu_scorer or FineWebEduScorer(
@@ -42,22 +44,21 @@ class QualityScorerSelection:
         else:
             self.pq_scorer = None
 
-    def select(self, samples: list[dict], k: int, **kwargs) -> list[dict]:
+    def select(self, samples: list[dict], k: int) -> list[dict]:
         if k <= 0 or not samples:
             return []
 
         df = pd.DataFrame(samples)
-        text_key = kwargs.get("text_key", "text")
-        if text_key not in df.columns:
-            df[text_key] = [extract_text(s) for s in samples]
+        if self.text_key not in df.columns:
+            df[self.text_key] = [extract_text(s) for s in samples]
 
         edu_scores: list[float] = []
         pq_scores: list[float] = []
 
         if self.edu_scorer is not None:
-            edu_scores = self.edu_scorer.eval(df, input_key=text_key).tolist()
+            edu_scores = self.edu_scorer.eval(df, input_key=self.text_key).tolist()
         if self.pq_scorer is not None:
-            pq_scores = self.pq_scorer.eval(df, input_key=text_key).tolist()
+            pq_scores = self.pq_scorer.eval(df, input_key=self.text_key).tolist()
 
         scored = []
         for i, s in enumerate(samples):

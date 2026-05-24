@@ -20,9 +20,13 @@ class DeitaQualitySelection:
         device: str = "cuda",
         model_cache_dir: str = "./dataflow_cache",
         max_length: int = 512,
+        instruction_key: str = "instruction",
+        output_key: str = "output",
         quality_scorer: Any = None,
         complexity_scorer: Any = None,
     ) -> None:
+        self.instruction_key = instruction_key
+        self.output_key = output_key
         self.quality_scorer = quality_scorer or DeitaQualityScorer(
             device=device, model_cache_dir=model_cache_dir, max_length=max_length
         )
@@ -30,20 +34,20 @@ class DeitaQualitySelection:
             device=device, model_cache_dir=model_cache_dir, max_length=max_length
         )
 
-    def select(self, samples: list[dict], k: int, **kwargs) -> list[dict]:
+    def select(self, samples: list[dict], k: int) -> list[dict]:
         if k <= 0 or not samples:
             return []
 
         df = pd.DataFrame(samples)
         q_scores = self.quality_scorer.eval(
             df,
-            input_instruction_key=kwargs.get("instruction_key", "instruction"),
-            input_output_key=kwargs.get("output_key", "output"),
+            input_instruction_key=self.instruction_key,
+            input_output_key=self.output_key,
         )
         c_scores = self.complexity_scorer.eval(
             df,
-            input_instruction_key=kwargs.get("instruction_key", "instruction"),
-            input_output_key=kwargs.get("output_key", "output"),
+            input_instruction_key=self.instruction_key,
+            input_output_key=self.output_key,
         )
 
         scored = []
