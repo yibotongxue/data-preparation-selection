@@ -1,4 +1,4 @@
-from data_selection.random_selection import RandomSelection
+from data_selection.selectors.random_selection import RandomSelection
 
 
 class TestRandomSelection:

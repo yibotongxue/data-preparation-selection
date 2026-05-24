@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from data_selection.llm_selector import LLMAsSelector
+from data_selection.selectors.llm_selector import LLMAsSelector
 
 
 class TestLLMAsSelector:

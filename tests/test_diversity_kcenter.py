@@ -1,4 +1,4 @@
-from data_selection.diversity_kcenter import DiversityKCenterSelection
+from data_selection.selectors.diversity_kcenter import DiversityKCenterSelection
 
 
 class TestDiversityKCenterSelection:

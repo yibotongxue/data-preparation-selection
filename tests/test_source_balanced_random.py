@@ -1,4 +1,6 @@
-from data_selection.source_balanced_random import SourceBalancedRandomSelection
+from data_selection.selectors.source_balanced_random import (
+    SourceBalancedRandomSelection,
+)
 
 
 class TestSourceBalancedRandomSelection:

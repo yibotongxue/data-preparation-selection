@@ -1,4 +1,4 @@
-from data_selection.embedding_similarity import EmbeddingSimilaritySelection
+from data_selection.selectors.embedding_similarity import EmbeddingSimilaritySelection
 
 
 class TestEmbeddingSimilaritySelection:

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-from data_selection.quality_scorer import QualityScorerSelection
+from data_selection.selectors.quality_scorer import QualityScorerSelection
 
 
 class TestQualityScorerSelection:

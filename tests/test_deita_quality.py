@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from data_selection.deita_quality import DeitaQualitySelection
+from data_selection.selectors.deita_quality import DeitaQualitySelection
 
 
 class TestDeitaQualitySelection:

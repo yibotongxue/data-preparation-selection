@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from data_selection.perplexity_based import PerplexityBasedSelection
+from data_selection.selectors.perplexity_based import PerplexityBasedSelection
 
 
 class TestPerplexityBasedSelection:

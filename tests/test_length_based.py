@@ -1,4 +1,4 @@
-from data_selection.length_based import LengthBasedSelection
+from data_selection.selectors.length_based import LengthBasedSelection
 
 
 class TestLengthBasedSelection:
