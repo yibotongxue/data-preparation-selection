@@ -9,12 +9,15 @@ from typing import Any
 import numpy as np
 from dataflex.offline_selector.offline_tsds_selector import offline_tsds_Selector
 
+from data_selection.utils import extract_text
+
 
 class DiversityKCenterSelector:
     """TSDS algorithm (DataFlex): greedy k-center for maximum diversity.
 
     Uses DataFlex's offline_tsds_Selector with KDE density and FAISS.
-    Computes sentence embeddings from instruction/output/conversations.
+    Text is extracted from instruction/output or conversations via
+    extract_text(), then written as Alpaca JSON for DataFlex.
     """
 
     def __init__(
@@ -76,15 +79,12 @@ class DiversityKCenterSelector:
         return result
 
 
-def _write_alpaca_json(samples: Sequence[Mapping[str, Any]], path: str) -> None:
+def _write_alpaca_json(
+    samples: Sequence[Mapping[str, Any]], path: str
+) -> None:
     items: list[dict[str, str]] = []
     for s in samples:
-        items.append(
-            {
-                "instruction": str(s.get("instruction", "")),
-                "input": "",
-                "output": str(s.get("output", "")),
-            }
-        )
+        text = extract_text(s)
+        items.append({"instruction": text, "input": "", "output": ""})
     with open(path, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False)

@@ -2,14 +2,18 @@ from __future__ import annotations
 
 from data_selection.config import CustomOmegaConfig
 from data_selection.selectors import LengthBasedSelector
+from data_selection.dataset import DatasetConfig
+
+
+def dataset():
+    return CustomOmegaConfig.of(
+        DatasetConfig,
+        path="data/input.jsonl",
+        output="data/output_length.jsonl",
+    )
 
 
 def selector():
     return {
-        "input": "/jizhicfs/linyibo/datasets/dyyyyyyyy/ScaleQuest-Math/scalequest_math.jsonl",
-        "output": "data/output_length.jsonl",
-        "selector": CustomOmegaConfig.of(
-            LengthBasedSelector,
-            k=100000,
-        ),
+        "selector": CustomOmegaConfig.of(LengthBasedSelector, k=100),
     }

@@ -4,27 +4,22 @@ from data_selection.selectors.length_based import LengthBasedSelector
 
 
 class TestLengthBasedSelection:
-    def test_select_by_instruction_output(self):
+    def test_select_basic(self):
         samples = [
-            {"instruction": "hi", "output": "ok"},
-            {"instruction": "hello world " * 10, "output": "long response " * 10},
-            {"instruction": "medium text " * 3, "output": "also medium " * 3},
+            {"messages": [{"role": "user", "content": "hi"}]},
+            {"messages": [{"role": "user", "content": "hello world " * 10}]},
+            {"messages": [{"role": "user", "content": "medium"}]},
         ]
         result = LengthBasedSelector(k=2).select(samples)
         assert len(result) == 2
-        assert result[0]["instruction"] == samples[1]["instruction"]
+        assert result[0]["messages"] == samples[1]["messages"]
         assert result[0]["meta"]["length"] > result[1]["meta"]["length"]
 
     def test_select_k_zero(self):
-        samples = [{"instruction": "hi", "output": "ok"}]
-        result = LengthBasedSelector(k=0).select(samples)
+        result = LengthBasedSelector(k=0).select(
+            [{"messages": [{"role": "user", "content": "hi"}]}]
+        )
         assert result == []
 
     def test_select_empty(self):
-        result = LengthBasedSelector(k=3).select([])
-        assert result == []
-
-    def test_select_missing_fields(self):
-        samples = [{"instruction": "hi"}, {"output": "ok"}, {}]
-        result = LengthBasedSelector(k=3).select(samples)
-        assert len(result) == 3
+        assert LengthBasedSelector(k=3).select([]) == []

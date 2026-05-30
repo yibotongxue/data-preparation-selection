@@ -7,9 +7,13 @@ import numpy as np
 from data_selection.selectors.quality_scorer import QualityScorerSelector
 
 
+def _sample(text: str) -> dict:
+    return {"messages": [{"role": "user", "content": text}]}
+
+
 class TestQualityScorerSelection:
     def test_select_fineweb_edu(self):
-        samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
+        samples = [_sample("a"), _sample("b"), _sample("c")]
         mock_edu = MagicMock()
         mock_edu.eval.return_value = np.array([0.8, 0.3, 0.9])
         result = QualityScorerSelector(
@@ -18,7 +22,7 @@ class TestQualityScorerSelection:
         assert result[0]["meta"]["fineweb_edu_score"] == 0.9
 
     def test_select_pairqual(self):
-        samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
+        samples = [_sample("a"), _sample("b"), _sample("c")]
         mock_pq = MagicMock()
         mock_pq.eval.return_value = np.array([0.2, 0.9, 0.5])
         result = QualityScorerSelector(
@@ -27,7 +31,7 @@ class TestQualityScorerSelection:
         assert result[0]["meta"]["pairqual_score"] == 0.9
 
     def test_select_composite(self):
-        samples = [{"text": "a"}, {"text": "b"}, {"text": "c"}]
+        samples = [_sample("a"), _sample("b"), _sample("c")]
         mock_edu = MagicMock()
         mock_edu.eval.return_value = np.array([0.8, 0.3, 0.9])
         mock_pq = MagicMock()
@@ -40,7 +44,7 @@ class TestQualityScorerSelection:
     def test_select_k_zero(self):
         result = QualityScorerSelector(
             k=0, edu_scorer=MagicMock(), pq_scorer=MagicMock()
-        ).select([{"text": "hi"}])
+        ).select([_sample("hi")])
         assert result == []
 
     def test_select_empty(self):

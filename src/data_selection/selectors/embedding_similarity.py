@@ -9,12 +9,15 @@ from typing import Any
 import numpy as np
 from dataflex.offline_selector.offline_near_selector import offline_near_Selector
 
+from data_selection.utils import extract_text
+
 
 class EmbeddingSimilaritySelector:
     """Near algorithm (DataFlex): select samples most similar to domain proxy.
 
     Uses DataFlex's offline_near_Selector with FAISS IVFFlat index.
-    Computes sentence embeddings from instruction/output/conversations.
+    Text is extracted from instruction/output or conversations via
+    extract_text(), then written as Alpaca JSON for DataFlex.
     """
 
     def __init__(
@@ -44,7 +47,8 @@ class EmbeddingSimilaritySelector:
             if self.domain_proxy_text:
                 query_path = os.path.join(tmpdir, "query.json")
                 _write_alpaca_json(
-                    [{"instruction": self.domain_proxy_text, "output": ""}], query_path
+                    [{"instruction": self.domain_proxy_text, "output": ""}],
+                    query_path,
                 )
             else:
                 query_path = candidate_path
@@ -78,16 +82,12 @@ class EmbeddingSimilaritySelector:
         return result
 
 
-def _write_alpaca_json(samples: Sequence[Mapping[str, Any]], path: str) -> None:
+def _write_alpaca_json(
+    samples: Sequence[Mapping[str, Any]], path: str
+) -> None:
     items: list[dict[str, str]] = []
     for s in samples:
-        str(s.get("instruction", s.get("conversations", "")))
-        items.append(
-            {
-                "instruction": str(s.get("instruction", "")),
-                "input": "",
-                "output": str(s.get("output", "")),
-            }
-        )
+        text = extract_text(s)
+        items.append({"instruction": text, "input": "", "output": ""})
     with open(path, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False)

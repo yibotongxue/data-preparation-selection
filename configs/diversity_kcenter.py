@@ -2,20 +2,22 @@ from __future__ import annotations
 
 from data_selection.config import CustomOmegaConfig
 from data_selection.selectors import DiversityKCenterSelector
+from data_selection.dataset import DatasetConfig
+
+
+def dataset():
+    return CustomOmegaConfig.of(
+        DatasetConfig,
+        path="data/input.jsonl",
+        output="data/output_diversity.jsonl",
+    )
 
 
 def selector():
     return {
-        "input": "/jizhicfs/linyibo/datasets/dyyyyyyyy/ScaleQuest-Math/scalequest_math.jsonl",
-        "output": "data/output_diversity.jsonl",
         "selector": CustomOmegaConfig.of(
             DiversityKCenterSelector,
-            k=100000,
+            k=100,
             seed=42,
-            embed_model="/jizhicfs/linyibo/models/Qwen/Qwen3-Embedding-0.6B",
-            embed_method="auto",
-            batch_size=32,
-            sigma=0.75,
-            alpha=0.6,
         ),
     }
