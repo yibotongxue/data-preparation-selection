@@ -6,7 +6,11 @@ from data_selection.selectors import RandomSelector
 
 def selector():
     return {
-        "input": "data/input.jsonl",
+        "input": "/jizhicfs/linyibo/datasets/dyyyyyyyy/ScaleQuest-Math/scalequest_math.jsonl",
         "output": "data/output_random.jsonl",
-        "selector": CustomOmegaConfig.of(RandomSelector, k=100, seed=42),
+        "selector": CustomOmegaConfig.of(
+            RandomSelector,
+            k=100000,
+            seed=42,
+        ),
     }

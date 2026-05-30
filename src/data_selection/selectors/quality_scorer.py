@@ -7,6 +7,7 @@ import pandas as pd
 from dataflow.operators.eval import FineWebEduScorer, PairQualScorer
 
 from data_selection.config import MaybeConfig, maybe_create
+from data_selection.score_cache import ScoreCache
 from data_selection.utils import extract_text
 
 
@@ -23,12 +24,16 @@ class QualityScorerSelector:
         lang: str = "en",
         edu_scorer: MaybeConfig[FineWebEduScorer] = None,
         pq_scorer: MaybeConfig[PairQualScorer] = None,
+        scores_cache_path: str | None = None,
+        batch_size: int = 256,
     ) -> None:
         if strategy not in ("fineweb_edu", "pairqual", "composite"):
             raise ValueError(f"Unknown strategy: {strategy}")
         self.k = k
         self.strategy = strategy
         self.text_key = text_key
+        self.batch_size = batch_size
+        self.scores_cache_path = scores_cache_path
 
         if strategy in ("fineweb_edu", "composite"):
             self.edu_scorer: FineWebEduScorer | None = maybe_create(
@@ -50,22 +55,56 @@ class QualityScorerSelector:
         if self.k <= 0 or not samples:
             return []
 
-        df = pd.DataFrame(samples)
-        if self.text_key not in df.columns:
-            df[self.text_key] = [extract_text(s) for s in samples]
+        # Load or create cache
+        cache = ScoreCache(self.scores_cache_path) if self.scores_cache_path else None
+        missing = cache.missing_indices(len(samples)) if cache else list(range(len(samples)))
 
-        edu_scores: list[float] = []
-        pq_scores: list[float] = []
+        if missing:
+            print(f"[QualityScorerSelector] Scoring {len(missing)} samples (cached: {len(samples) - len(missing)})")
 
-        if self.edu_scorer is not None:
-            edu_scores = self.edu_scorer.eval(df, input_key=self.text_key).tolist()
-        if self.pq_scorer is not None:
-            pq_scores = self.pq_scorer.eval(df, input_key=self.text_key).tolist()
+            for batch_start in range(0, len(missing), self.batch_size):
+                batch_indices = missing[batch_start : batch_start + self.batch_size]
+                batch_samples = [samples[i] for i in batch_indices]
+
+                df = pd.DataFrame(batch_samples)
+                if self.text_key not in df.columns:
+                    df[self.text_key] = [extract_text(s) for s in batch_samples]
+
+                edu_scores: list[float] = []
+                pq_scores: list[float] = []
+
+                if self.edu_scorer is not None:
+                    edu_scores = self.edu_scorer.eval(df, input_key=self.text_key).tolist()
+                if self.pq_scorer is not None:
+                    pq_scores = self.pq_scorer.eval(df, input_key=self.text_key).tolist()
+
+                entries: list[tuple[int, dict[str, Any]]] = []
+                for j, idx in enumerate(batch_indices):
+                    scores: dict[str, Any] = {}
+                    if edu_scores:
+                        scores["fineweb_edu"] = float(edu_scores[j])
+                    if pq_scores:
+                        scores["pairqual"] = float(pq_scores[j])
+                    entries.append((idx, scores))
+
+                if cache:
+                    cache.put_batch(entries)
+                else:
+                    if not hasattr(self, "_temp_scores"):
+                        self._temp_scores: dict[int, dict[str, Any]] = {}
+                    for idx, scores in entries:
+                        self._temp_scores[idx] = scores
+
+        # Collect all scores
+        all_scores = cache.all_scores() if cache else getattr(self, "_temp_scores", {})
 
         scored: list[tuple[float, float | None, float | None, Mapping[str, Any]]] = []
         for i, s in enumerate(samples):
-            e = float(edu_scores[i]) if edu_scores else None
-            p = float(pq_scores[i]) if pq_scores else None
+            sc = all_scores.get(i)
+            if sc is None:
+                continue
+            e = sc.get("fineweb_edu")
+            p = sc.get("pairqual")
             if self.strategy == "fineweb_edu":
                 score = e or 0.0
             elif self.strategy == "pairqual":

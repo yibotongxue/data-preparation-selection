@@ -8,6 +8,7 @@ import pandas as pd
 from dataflow.operators.eval import PerplexityScorer
 
 from data_selection.config import MaybeConfig, maybe_create
+from data_selection.score_cache import ScoreCache
 from data_selection.utils import extract_text
 
 
@@ -22,12 +23,16 @@ class PerplexityBasedSelector:
         lang: str = "en",
         model_name: str = "dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia",
         scorer: MaybeConfig[PerplexityScorer] = None,
+        scores_cache_path: str | None = None,
+        batch_size: int = 1000,
     ) -> None:
         if strategy not in ("low", "high", "mid"):
             raise ValueError(f"Unknown strategy: {strategy}")
         self.k = k
         self.strategy = strategy
         self.text_key = text_key
+        self.batch_size = batch_size
+        self.scores_cache_path = scores_cache_path
         self.scorer = maybe_create(scorer) or PerplexityScorer(
             lang=lang, model_name=model_name
         )
@@ -36,14 +41,43 @@ class PerplexityBasedSelector:
         if self.k <= 0 or not samples:
             return []
 
-        df = pd.DataFrame(samples)
-        if self.text_key not in df.columns:
-            df[self.text_key] = [extract_text(s) for s in samples]
+        cache = ScoreCache(self.scores_cache_path) if self.scores_cache_path else None
+        missing = cache.missing_indices(len(samples)) if cache else list(range(len(samples)))
 
-        ppl_scores = self.scorer.eval(df, input_key=self.text_key)
+        if missing:
+            print(f"[PerplexityBasedSelector] Scoring {len(missing)} samples (cached: {len(samples) - len(missing)})")
+
+            for batch_start in range(0, len(missing), self.batch_size):
+                batch_indices = missing[batch_start : batch_start + self.batch_size]
+                batch_samples = [samples[i] for i in batch_indices]
+
+                df = pd.DataFrame(batch_samples)
+                if self.text_key not in df.columns:
+                    df[self.text_key] = [extract_text(s) for s in batch_samples]
+
+                ppl_scores = self.scorer.eval(df, input_key=self.text_key)
+
+                entries: list[tuple[int, dict[str, Any]]] = []
+                for j, idx in enumerate(batch_indices):
+                    entries.append((idx, {"ppl": float(ppl_scores[j])}))
+
+                if cache:
+                    cache.put_batch(entries)
+                else:
+                    if not hasattr(self, "_temp_scores"):
+                        self._temp_scores: dict[int, dict[str, Any]] = {}
+                    for idx, scores in entries:
+                        self._temp_scores[idx] = scores
+
+        # Collect all scores
+        all_scores = cache.all_scores() if cache else getattr(self, "_temp_scores", {})
+
         ordered: list[tuple[float, int]] = []
-        for i, s in enumerate(samples):
-            ordered.append((float(ppl_scores[i]), i))
+        for i in range(len(samples)):
+            sc = all_scores.get(i)
+            if sc is None:
+                continue
+            ordered.append((sc["ppl"], i))
 
         if self.strategy == "low":
             ordered.sort(key=lambda x: x[0])
