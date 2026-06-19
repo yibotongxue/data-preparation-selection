@@ -29,6 +29,7 @@ class DiversityKCenterSelector:
         batch_size: int = 32,
         sigma: float = 0.75,
         alpha: float = 0.6,
+        max_chars: int = 2000,
     ) -> None:
         self.k = k
         self.seed = seed
@@ -37,6 +38,9 @@ class DiversityKCenterSelector:
         self.batch_size = batch_size
         self.sigma = sigma
         self.alpha = alpha
+        # Cap per-sample text length to bound embedding sequence length and
+        # avoid attention O(L^2) OOM on very long samples.
+        self.max_chars = max_chars
 
     def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
@@ -46,7 +50,7 @@ class DiversityKCenterSelector:
             candidate_path = os.path.join(tmpdir, "candidates.json")
             probs_path = os.path.join(tmpdir, "tsds_probs.npy")
 
-            _write_alpaca_json(samples, candidate_path)
+            _write_alpaca_json(samples, candidate_path, self.max_chars)
 
             tsds = offline_tsds_Selector(
                 candidate_path=candidate_path,
@@ -80,11 +84,13 @@ class DiversityKCenterSelector:
 
 
 def _write_alpaca_json(
-    samples: Sequence[Mapping[str, Any]], path: str
+    samples: Sequence[Mapping[str, Any]], path: str, max_chars: int = 2000
 ) -> None:
     items: list[dict[str, str]] = []
     for s in samples:
         text = extract_text(s)
+        if max_chars and len(text) > max_chars:
+            text = text[:max_chars]
         items.append({"instruction": text, "input": "", "output": ""})
     with open(path, "w", encoding="utf-8") as f:
         json.dump(items, f, ensure_ascii=False)
