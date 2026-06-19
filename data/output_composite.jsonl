@@ -1,3 +1,0 @@
-{"instruction": "a long instruction about AI", "output": "detailed answer", "meta": {"selector": "LengthBasedSelector", "length": 43}}
-{"instruction": "hello world", "output": "hi", "meta": {"selector": "LengthBasedSelector", "length": 14}}
-{"instruction": "short", "output": "ok", "meta": {"selector": "LengthBasedSelector", "length": 8}}
