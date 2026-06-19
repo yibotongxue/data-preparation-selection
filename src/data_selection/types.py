@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import NotRequired, TypedDict
 
 
-
 class Meta(TypedDict, total=False):
     selector: str
     seed: NotRequired[int | None]

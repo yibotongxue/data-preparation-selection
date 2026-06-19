@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from data_selection.config import MaybeConfig, maybe_create
 from data_selection.protocol import Selector
 
 
@@ -12,10 +11,10 @@ class CompositeSelector:
 
     def __init__(
         self,
-        selectors: list[MaybeConfig[Selector]],
+        selectors: list[Selector],
         k: int = 100,
     ) -> None:
-        self._selectors: list[Selector] = [maybe_create(s) for s in selectors]  # type: ignore[misc]
+        self._selectors: list[Selector] = list(selectors)
         self.k = k
 
     def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:

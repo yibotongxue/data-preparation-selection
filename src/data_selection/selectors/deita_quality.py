@@ -9,12 +9,13 @@ from dataflow.operators.eval import (
     DeitaQualityScorer,
 )
 
-from data_selection.config import MaybeConfig, maybe_create
 from data_selection.score_cache import ScoreCache
 
 
 class DeitaQualitySelector:
     """Select samples by Deita quality x complexity composite score."""
+
+    _score_based = True
 
     def __init__(
         self,
@@ -22,20 +23,18 @@ class DeitaQualitySelector:
         device: str = "cuda",
         model_cache_dir: str = "./dataflow_cache",
         max_length: int = 8192,
-        quality_scorer: MaybeConfig[DeitaQualityScorer] = None,
-        complexity_scorer: MaybeConfig[DeitaComplexityScorer] = None,
+        quality_scorer: DeitaQualityScorer | None = None,
+        complexity_scorer: DeitaComplexityScorer | None = None,
         scores_cache_path: str | None = None,
         batch_size: int = 1000,
     ) -> None:
         self.k = k
         self.scores_cache_path = scores_cache_path
         self.batch_size = batch_size
-        self.quality_scorer = maybe_create(quality_scorer) or DeitaQualityScorer(
+        self.quality_scorer = quality_scorer or DeitaQualityScorer(
             device=device, model_cache_dir=model_cache_dir, max_length=max_length
         )
-        self.complexity_scorer = maybe_create(
-            complexity_scorer
-        ) or DeitaComplexityScorer(
+        self.complexity_scorer = complexity_scorer or DeitaComplexityScorer(
             device=device, model_cache_dir=model_cache_dir, max_length=max_length
         )
 
@@ -46,9 +45,7 @@ class DeitaQualitySelector:
         # 可断点续跑的缓存: 每条样本缓存 {"quality": .., "complexity": ..}
         cache = ScoreCache(self.scores_cache_path) if self.scores_cache_path else None
         missing = (
-            cache.missing_indices(len(samples))
-            if cache
-            else list(range(len(samples)))
+            cache.missing_indices(len(samples)) if cache else list(range(len(samples)))
         )
 
         if missing:

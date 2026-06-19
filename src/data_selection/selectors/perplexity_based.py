@@ -7,13 +7,14 @@ from typing import Any
 import pandas as pd
 from dataflow.operators.eval import PerplexityScorer
 
-from data_selection.config import MaybeConfig, maybe_create
 from data_selection.score_cache import ScoreCache
 from data_selection.utils import extract_text
 
 
 class PerplexityBasedSelector:
     """Select samples by perplexity using DataFlow's Kenlm-based scorer."""
+
+    _score_based = True
 
     def __init__(
         self,
@@ -22,7 +23,7 @@ class PerplexityBasedSelector:
         text_key: str = "text",
         lang: str = "en",
         model_name: str = "dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia",
-        scorer: MaybeConfig[PerplexityScorer] = None,
+        scorer: PerplexityScorer | None = None,
         scores_cache_path: str | None = None,
         batch_size: int = 1000,
     ) -> None:
@@ -33,19 +34,21 @@ class PerplexityBasedSelector:
         self.text_key = text_key
         self.batch_size = batch_size
         self.scores_cache_path = scores_cache_path
-        self.scorer = maybe_create(scorer) or PerplexityScorer(
-            lang=lang, model_name=model_name
-        )
+        self.scorer = scorer or PerplexityScorer(lang=lang, model_name=model_name)
 
     def select(self, samples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         if self.k <= 0 or not samples:
             return []
 
         cache = ScoreCache(self.scores_cache_path) if self.scores_cache_path else None
-        missing = cache.missing_indices(len(samples)) if cache else list(range(len(samples)))
+        missing = (
+            cache.missing_indices(len(samples)) if cache else list(range(len(samples)))
+        )
 
         if missing:
-            print(f"[PerplexityBasedSelector] Scoring {len(missing)} samples (cached: {len(samples) - len(missing)})")
+            print(
+                f"[PerplexityBasedSelector] Scoring {len(missing)} samples (cached: {len(samples) - len(missing)})"
+            )
 
             for batch_start in range(0, len(missing), self.batch_size):
                 batch_indices = missing[batch_start : batch_start + self.batch_size]

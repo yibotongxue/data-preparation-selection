@@ -51,7 +51,9 @@ class ScoreCache:
         self._cache[idx] = scores
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({"idx": idx, "scores": scores}, ensure_ascii=False) + "\n")
+            f.write(
+                json.dumps({"idx": idx, "scores": scores}, ensure_ascii=False) + "\n"
+            )
 
     def put_batch(self, entries: list[tuple[int, dict[str, Any]]]) -> None:
         """Add multiple score entries and persist in one write."""
@@ -59,7 +61,10 @@ class ScoreCache:
         with open(self.path, "a", encoding="utf-8") as f:
             for idx, scores in entries:
                 self._cache[idx] = scores
-                f.write(json.dumps({"idx": idx, "scores": scores}, ensure_ascii=False) + "\n")
+                f.write(
+                    json.dumps({"idx": idx, "scores": scores}, ensure_ascii=False)
+                    + "\n"
+                )
 
     def cached_count(self) -> int:
         """Number of cached entries."""

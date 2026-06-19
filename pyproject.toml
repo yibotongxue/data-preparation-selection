@@ -8,7 +8,6 @@ dependencies = [
     "dataflex",
     "faiss-cpu",
     "numpy",
-    "omegaconf",
     "open-dataflow",
     "pytz>=2026.2",
     "scikit-learn",
@@ -24,10 +23,7 @@ include = '\.pyi?$'
 [tool.isort]
 profile = "black"
 line_length = 88
-src_paths = ["src", "tests"]
-
-[project.scripts]
-select = "data_selection.cli:main"
+src_paths = ["src", "tests", "examples"]
 
 [build-system]
 requires = ["uv_build>=0.9.5,<0.10.0"]

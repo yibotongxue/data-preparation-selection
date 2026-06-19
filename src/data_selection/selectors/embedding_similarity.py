@@ -112,9 +112,7 @@ class EmbeddingSimilaritySelector:
             xb = np.asarray(
                 near.candidate_sentence_embedding(), dtype=np.float32
             )  # (N, D)
-            xq = np.asarray(
-                near.query_sentence_embedding(), dtype=np.float32
-            )  # (M, D)
+            xq = np.asarray(near.query_sentence_embedding(), dtype=np.float32)  # (M, D)
 
             centroid = xq.mean(axis=0)
             norm = float(np.linalg.norm(centroid))

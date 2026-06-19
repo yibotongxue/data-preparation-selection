@@ -7,29 +7,29 @@ import pandas as pd
 from dataflow.core import LLMServingABC
 from dataflow.operators.eval import MetaScorer
 
-from data_selection.config import MaybeConfig, maybe_create
 from data_selection.utils import extract_text
 
 
 class LLMAsSelector:
     """Use an LLM to score and rank samples via DataFlow's MetaScorer."""
 
+    _score_based = True
+
     def __init__(
         self,
         k: int = 100,
         text_key: str = "text",
-        llm_serving: MaybeConfig[LLMServingABC] = None,
+        llm_serving: LLMServingABC | None = None,
         dimensions: list[dict[str, Any]] | None = None,
-        scorer: MaybeConfig[MetaScorer] = None,
+        scorer: MetaScorer | None = None,
     ) -> None:
         self.k = k
         self.text_key = text_key
-        scorer = maybe_create(scorer)
         if scorer is not None:
             self.scorer: MetaScorer | None = scorer
         elif llm_serving is not None:
             self.scorer = MetaScorer(
-                llm_serving=maybe_create(llm_serving),  # type: ignore[arg-type]
+                llm_serving=llm_serving,
                 dimensions=dimensions or [],
             )
         else:

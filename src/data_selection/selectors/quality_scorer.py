@@ -6,13 +6,14 @@ from typing import Any
 import pandas as pd
 from dataflow.operators.eval import FineWebEduScorer, PairQualScorer
 
-from data_selection.config import MaybeConfig, maybe_create
 from data_selection.score_cache import ScoreCache
 from data_selection.utils import extract_text
 
 
 class QualityScorerSelector:
     """Select samples by educational/quality score using DataFlow scorers."""
+
+    _score_based = True
 
     def __init__(
         self,
@@ -22,8 +23,8 @@ class QualityScorerSelector:
         device: str = "cuda",
         model_cache_dir: str = "./dataflow_cache",
         lang: str = "en",
-        edu_scorer: MaybeConfig[FineWebEduScorer] = None,
-        pq_scorer: MaybeConfig[PairQualScorer] = None,
+        edu_scorer: FineWebEduScorer | None = None,
+        pq_scorer: PairQualScorer | None = None,
         scores_cache_path: str | None = None,
         batch_size: int = 256,
     ) -> None:
@@ -36,16 +37,14 @@ class QualityScorerSelector:
         self.scores_cache_path = scores_cache_path
 
         if strategy in ("fineweb_edu", "composite"):
-            self.edu_scorer: FineWebEduScorer | None = maybe_create(
-                edu_scorer
-            ) or FineWebEduScorer(model_cache_dir=model_cache_dir, device=device)
+            self.edu_scorer: FineWebEduScorer | None = edu_scorer or FineWebEduScorer(
+                model_cache_dir=model_cache_dir, device=device
+            )
         else:
             self.edu_scorer = None
 
         if strategy in ("pairqual", "composite"):
-            self.pq_scorer: PairQualScorer | None = maybe_create(
-                pq_scorer
-            ) or PairQualScorer(
+            self.pq_scorer: PairQualScorer | None = pq_scorer or PairQualScorer(
                 model_cache_dir=model_cache_dir, device=device, lang=lang
             )
         else:
@@ -57,10 +56,14 @@ class QualityScorerSelector:
 
         # Load or create cache
         cache = ScoreCache(self.scores_cache_path) if self.scores_cache_path else None
-        missing = cache.missing_indices(len(samples)) if cache else list(range(len(samples)))
+        missing = (
+            cache.missing_indices(len(samples)) if cache else list(range(len(samples)))
+        )
 
         if missing:
-            print(f"[QualityScorerSelector] Scoring {len(missing)} samples (cached: {len(samples) - len(missing)})")
+            print(
+                f"[QualityScorerSelector] Scoring {len(missing)} samples (cached: {len(samples) - len(missing)})"
+            )
 
             for batch_start in range(0, len(missing), self.batch_size):
                 batch_indices = missing[batch_start : batch_start + self.batch_size]
@@ -74,9 +77,13 @@ class QualityScorerSelector:
                 pq_scores: list[float] = []
 
                 if self.edu_scorer is not None:
-                    edu_scores = self.edu_scorer.eval(df, input_key=self.text_key).tolist()
+                    edu_scores = self.edu_scorer.eval(
+                        df, input_key=self.text_key
+                    ).tolist()
                 if self.pq_scorer is not None:
-                    pq_scores = self.pq_scorer.eval(df, input_key=self.text_key).tolist()
+                    pq_scores = self.pq_scorer.eval(
+                        df, input_key=self.text_key
+                    ).tolist()
 
                 entries: list[tuple[int, dict[str, Any]]] = []
                 for j, idx in enumerate(batch_indices):
