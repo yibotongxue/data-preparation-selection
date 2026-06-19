@@ -20,8 +20,8 @@ def selector():
         "selector": CustomOmegaConfig.of(
             DeitaQualitySelector,
             k=100,
-            device="cpu",
-            quality_scorer=CustomOmegaConfig.of(DeitaQualityScorer, device="cpu"),
-            complexity_scorer=CustomOmegaConfig.of(DeitaComplexityScorer, device="cpu"),
+            device="cuda",
+            quality_scorer=CustomOmegaConfig.of(DeitaQualityScorer, device="cuda"),
+            complexity_scorer=CustomOmegaConfig.of(DeitaComplexityScorer, device="cuda"),
         ),
     }

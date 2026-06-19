@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from configs.random import selector as random_selector
+from .random import selector as random_selector
 
 from data_selection.config import CustomOmegaConfig
 from data_selection.selectors import CompositeSelector, LengthBasedSelector

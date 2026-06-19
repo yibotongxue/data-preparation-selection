@@ -9,15 +9,16 @@ def dataset():
     return CustomOmegaConfig.of(
         DatasetConfig,
         path="/jizhicfs/linyibo/datasets/dyyyyyyyy/ScaleQuest-Math/scalequest_math.jsonl",
-        output="data/output_perplexity.jsonl",
+        output="data/output_perplexity_high.jsonl",
     )
+
 
 def selector():
     return {
         "selector": CustomOmegaConfig.of(
             PerplexityBasedSelector,
             k=100000,
-            strategy="low",
+            strategy="high",
             text_key="text",
             lang="en",
             model_name="dataflow/operators/eval/GeneralText/models/Kenlm/wikipedia",

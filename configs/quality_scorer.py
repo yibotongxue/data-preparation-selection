@@ -4,12 +4,18 @@ from dataflow.operators.eval import FineWebEduScorer, PairQualScorer
 
 from data_selection.config import CustomOmegaConfig
 from data_selection.selectors import QualityScorerSelector
+from data_selection.dataset import DatasetConfig
 
+
+def dataset():
+    return CustomOmegaConfig.of(
+        DatasetConfig,
+        path="/jizhicfs/linyibo/datasets/dyyyyyyyy/ScaleQuest-Math/scalequest_math.jsonl",
+        output="data/output_quality.jsonl",
+    )
 
 def selector():
     return {
-        "input": "/jizhicfs/linyibo/datasets/dyyyyyyyy/ScaleQuest-Math/scalequest_math.jsonl",
-        "output": "data/output_quality.jsonl",
         "selector": CustomOmegaConfig.of(
             QualityScorerSelector,
             k=100000,
